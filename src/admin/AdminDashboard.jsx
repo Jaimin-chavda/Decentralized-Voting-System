@@ -1,49 +1,56 @@
-import React, { useState } from 'react';
-import { DEMO_ADMIN, SEED_PROPOSALS } from '../data/demoData';
-import ProposalManager from './ProposalManager';
-import CandidateManager from './CandidateManager';
-import { useToast } from '../utils/toast';
-import './admin.css';
+import React, { useState } from "react";
+import { DEMO_ADMIN } from "../data/demoData";
+import { useProposals } from "../context/ProposalContext";
+import ProposalManager from "./ProposalManager";
+import CandidateManager from "./CandidateManager";
+import { useToast } from "../utils/toast";
+import "./admin.css";
 
 export default function AdminDashboard() {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('proposals');
-  const [proposals, setProposals] = useState(SEED_PROPOSALS);
+  const [activeTab, setActiveTab] = useState("proposals");
+  const { proposals, setProposals } = useProposals();
   const { addToast } = useToast();
 
   // Compute stats
   const totalProposals = proposals.length;
-  const activeProposals = proposals.filter((p) => p.status === 'active').length;
-  const totalCandidates = proposals.reduce((s, p) => s + (p.candidates?.length || 0), 0);
+  const activeProposals = proposals.filter((p) => p.status === "active").length;
+  const totalCandidates = proposals.reduce(
+    (s, p) => s + (p.candidates?.length || 0),
+    0,
+  );
   const totalVotes = proposals.reduce(
     (s, p) => s + (p.candidates || []).reduce((vs, c) => vs + c.votes, 0),
-    0
+    0,
   );
 
   // Login handler
   const handleLogin = (e) => {
     e.preventDefault();
-    if (loginEmail === DEMO_ADMIN.email && loginPassword === DEMO_ADMIN.password) {
+    if (
+      loginEmail === DEMO_ADMIN.email &&
+      loginPassword === DEMO_ADMIN.password
+    ) {
       setIsAuthenticated(true);
-      setLoginError('');
-      addToast({ message: 'Welcome, Admin!', type: 'success' });
+      setLoginError("");
+      addToast({ message: "Welcome, Admin!", type: "success" });
     } else {
-      setLoginError('Invalid credentials. Try admin@govchain.io / admin123');
+      setLoginError("Invalid credentials. Try admin@govchain.io / admin123");
     }
   };
 
   // Logout handler
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setLoginEmail('');
-    setLoginPassword('');
-    addToast({ message: 'Logged out.', type: 'info' });
+    setLoginEmail("");
+    setLoginPassword("");
+    addToast({ message: "Logged out.", type: "info" });
   };
 
   // Login gate
@@ -56,7 +63,9 @@ export default function AdminDashboard() {
             <span className="admin-badge">ADMIN</span>
           </div>
           <h2 className="admin-login-title">Admin Panel</h2>
-          <p className="admin-login-subtitle">Sign in to manage proposals & candidates</p>
+          <p className="admin-login-subtitle">
+            Sign in to manage proposals & candidates
+          </p>
 
           {loginError && <div className="admin-login-error">{loginError}</div>}
 
@@ -107,7 +116,10 @@ export default function AdminDashboard() {
         </div>
         <div className="admin-topbar-right">
           <span className="admin-user">👤 {DEMO_ADMIN.name}</span>
-          <button className="btn btn-secondary admin-logout-btn" onClick={handleLogout}>
+          <button
+            className="btn btn-secondary admin-logout-btn"
+            onClick={handleLogout}
+          >
             Logout
           </button>
         </div>
@@ -140,7 +152,9 @@ export default function AdminDashboard() {
           <div className="admin-stat-card stat-orange">
             <div className="admin-stat-icon">🗳️</div>
             <div>
-              <div className="admin-stat-number">{totalVotes.toLocaleString()}</div>
+              <div className="admin-stat-number">
+                {totalVotes.toLocaleString()}
+              </div>
               <div className="admin-stat-label">Total Votes</div>
             </div>
           </div>
@@ -149,14 +163,14 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <div className="admin-tabs">
           <button
-            className={`admin-tab ${activeTab === 'proposals' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('proposals')}
+            className={`admin-tab ${activeTab === "proposals" ? "admin-tab-active" : ""}`}
+            onClick={() => setActiveTab("proposals")}
           >
             📋 Proposals
           </button>
           <button
-            className={`admin-tab ${activeTab === 'candidates' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('candidates')}
+            className={`admin-tab ${activeTab === "candidates" ? "admin-tab-active" : ""}`}
+            onClick={() => setActiveTab("candidates")}
           >
             👥 Candidates
           </button>
@@ -164,11 +178,17 @@ export default function AdminDashboard() {
 
         {/* Tab Content */}
         <div className="admin-content">
-          {activeTab === 'proposals' && (
-            <ProposalManager proposals={proposals} setProposals={setProposals} />
+          {activeTab === "proposals" && (
+            <ProposalManager
+              proposals={proposals}
+              setProposals={setProposals}
+            />
           )}
-          {activeTab === 'candidates' && (
-            <CandidateManager proposals={proposals} setProposals={setProposals} />
+          {activeTab === "candidates" && (
+            <CandidateManager
+              proposals={proposals}
+              setProposals={setProposals}
+            />
           )}
         </div>
       </main>
