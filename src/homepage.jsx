@@ -1,7 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import LivePolls from "./LivePolls";
-
+import { Link } from "react-router-dom";
 /* ─── Animation Variants ──────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -21,11 +20,6 @@ const stagger = {
 };
 
 /* ─── Data ────────────────────────────────────────────── */
-const stats = [
-  { value: "1.2K+", label: "Active Users", icon: "👥" },
-  { value: "89", label: "Proposals", icon: "📋" },
-  { value: "$2.4M", label: "Treasury", icon: "💰" },
-];
 
 const features = [
   {
@@ -111,9 +105,9 @@ export default function Homepage() {
         />
 
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Text */}
-            <motion.div initial="hidden" animate="visible" variants={stagger}>
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+            {/* Center — Text */}
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="flex flex-col items-center">
               <motion.div
                 variants={fadeUp}
                 className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium"
@@ -136,7 +130,7 @@ export default function Homepage() {
               <motion.p
                 variants={fadeUp}
                 custom={2}
-                className="text-lg text-text-muted leading-relaxed max-w-lg mb-8"
+                className="text-lg text-text-muted leading-relaxed max-w-2xl mx-auto mb-8"
               >
                 Create proposals, vote transparently, and make decisions
                 together. All powered by blockchain technology for trustless,
@@ -146,7 +140,7 @@ export default function Homepage() {
               <motion.div
                 variants={fadeUp}
                 custom={3}
-                className="flex flex-wrap gap-4"
+                className="flex flex-wrap justify-center gap-4"
               >
                 <a
                   href="/signup"
@@ -154,47 +148,19 @@ export default function Homepage() {
                 >
                   Get Started
                 </a>
-                <a
-                  href="#live-polls"
+                <Link
+                  to="/vote"
                   className="px-7 py-3.5 text-sm font-semibold text-text-primary glass rounded-2xl hover:bg-white/10 transition-all duration-300"
                 >
-                  View Polls ↓
-                </a>
+                  View Campaigns →
+                </Link>
               </motion.div>
             </motion.div>
 
-            {/* Right — Stat Cards */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={stagger}
-              className="flex flex-col gap-5"
-            >
-              {stats.map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  variants={fadeUp}
-                  custom={i + 2}
-                  className="glass rounded-2xl p-6 flex items-center gap-5 group hover:bg-white/[0.08] transition-all duration-300"
-                >
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform duration-300">
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <div className="text-3xl font-extrabold text-text-primary">
-                      {stat.value}
-                    </div>
-                    <div className="text-sm text-text-muted">{stat.label}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ═══ LIVE POLLS ═══ */}
-      <LivePolls />
 
       {/* ═══ FEATURES ═══ */}
       <section id="features" className="py-24 lg:py-32 relative">
@@ -281,7 +247,7 @@ export default function Homepage() {
               custom={1}
               className="text-3xl sm:text-4xl font-bold text-text-primary mb-4"
             >
-              How <span className="gradient-text">GovChain</span> Works
+              How <span className="gradient-text">VoteChain</span> Works
             </motion.h2>
             <motion.p
               variants={fadeUp}
@@ -352,7 +318,7 @@ export default function Homepage() {
               custom={1}
               className="relative text-text-muted mb-8 max-w-lg mx-auto"
             >
-              Join hundreds of communities already using GovChain for
+              Join hundreds of communities already using VoteChain for
               transparent, trustless decision-making.
             </motion.p>
             <motion.div

@@ -9,7 +9,7 @@
 export const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 // ABI — only the functions the frontend needs
-// (full ABI is in artifacts/contracts/GovChainVoting.sol/GovChainVoting.json)
+// (full ABI is in artifacts/contracts/VoteChainVoting.sol/VoteChainVoting.json)
 export const CONTRACT_ABI = [
   // Admin functions
   "function createProposal(string calldata _title, string calldata _description, string[] calldata _candidateNames, uint256 _durationSecs) external",

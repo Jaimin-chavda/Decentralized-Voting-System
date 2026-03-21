@@ -44,11 +44,12 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm">
-                G
-              </div>
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="9 11 12 14 22 4"></polyline>
+  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+</svg>
               <span className="text-lg font-bold text-text-primary">
-                GovChain
+                VoteChain
               </span>
             </Link>
             <p className="text-sm text-text-muted leading-relaxed mb-6">
@@ -147,7 +148,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-6 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            © 2026 GovChain. All rights reserved.
+            © 2026 VoteChain. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-xs text-text-muted">
             <a href="#" className="hover:text-text-primary transition-colors">

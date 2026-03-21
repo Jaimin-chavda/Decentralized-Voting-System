@@ -1,0 +1,283 @@
+================================================================================
+  DECENTRALIZED GOVERNANCE SYSTEM (DGS) — PROJECT FILES GUIDE
+================================================================================
+
+This file briefly explains each custom file in the project.
+Default React/Vite files (main.jsx, vite.config.js, eslint.config.js, etc.)
+are excluded.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  ROOT-LEVEL FILES
+────────────────────────────────────────────────────────────────────────────────
+
+hardhat.config.cjs
+  Hardhat configuration file. Sets Solidity compiler version to 0.8.27,
+  configures the localhost network (http://127.0.0.1:8545), and defines
+  paths for contracts, tests, cache, and artifacts.
+
+index.html
+  The single HTML entry point for the Vite + React app. Loads the root
+  React component and includes meta tags for the application.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  contracts/
+────────────────────────────────────────────────────────────────────────────────
+
+GovChainVoting.sol
+  The main Solidity smart contract for on-chain governance voting.
+  Features:
+    - Admin can create proposals with multiple candidates and a time-bound
+      voting window.
+    - Admin can end proposals early.
+    - Any wallet can vote once per proposal on an active proposal.
+    - View functions to fetch proposal metadata, individual candidates,
+      and aggregated results (names + vote counts).
+  Emits events: ProposalCreated, Voted, ProposalEnded.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  scripts/
+────────────────────────────────────────────────────────────────────────────────
+
+deploy.cjs
+  Hardhat deployment script. Deploys the GovChainVoting contract to the
+  local Hardhat node and seeds it with 3 sample proposals for testing:
+    1. Community Treasury Allocation Q1 (7-day window)
+    2. Protocol Upgrade v2.5 (14-day window)
+    3. New Council Member Election (5-day window)
+  Prints the deployed contract address to paste into contractConfig.js.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  test/
+────────────────────────────────────────────────────────────────────────────────
+
+GovChainVoting.test.cjs
+  Comprehensive test suite for the GovChainVoting smart contract using
+  Hardhat + Chai. Covers:
+    - Deployment (admin set correctly, zero initial proposals)
+    - Proposal creation (admin-only, requires candidates)
+    - Voting (cast vote, block double voting, multiple voters, invalid
+      candidate index, non-existent proposal)
+    - End Proposal (admin-only, blocks voting after ended)
+    - Results (correct vote tallies returned)
+
+
+────────────────────────────────────────────────────────────────────────────────
+  server/
+────────────────────────────────────────────────────────────────────────────────
+
+authVerify.js
+  A reference Express.js backend for wallet-based authentication.
+  Provides two endpoints:
+    - POST /api/auth/nonce  → Generates a cryptographic nonce for the
+      wallet to sign.
+    - POST /api/auth/verify → Verifies the signed message using ethers
+      verifyMessage, validates the nonce, and authenticates the user.
+  Run separately with: node server/authVerify.js
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/ — PAGES
+────────────────────────────────────────────────────────────────────────────────
+
+App.jsx
+  Root application component. Sets up React Router routes for all pages
+  and conditionally renders the shared Navbar and Footer (hidden on
+  admin, vote, login, signup, wallet-connect, and profile pages).
+
+AppRouter.jsx
+  Duplicate/alternative of App.jsx with the same routing logic.
+  Contains identical route definitions and layout toggling.
+
+homepage.jsx
+  The landing page of the application. Showcases the platform with a
+  hero section, features overview, statistics, governance process
+  explanation, and call-to-action sections. Modern dark-themed SaaS
+  design with animations.
+
+Login.jsx
+  Login page with email/password form. Supports demo credentials
+  (admin and regular user) for quick testing. Includes animated UI
+  with glassmorphism styling.
+
+Signup.jsx
+  Registration page with name, email, and password fields. Includes
+  password confirmation, terms acceptance, and animated form design
+  matching the login page style.
+
+WalletConnect.jsx
+  MetaMask wallet connection page. Handles the full wallet auth flow:
+  detect MetaMask, connect wallet, switch to correct network (Sepolia),
+  sign an authentication message, and verify the signature. Uses the
+  useWallet hook for MetaMask interaction.
+
+UserProfile.jsx
+  User profile dashboard showing account details, wallet status,
+  governance statistics, voting history, and recent activity. Displays
+  connected wallet info with network badge.
+
+VotingPage.jsx
+  The main voting interface. Connects to the local Hardhat blockchain
+  via the useContract hook. Displays active proposals with candidates,
+  lets users cast votes, and shows real-time vote counts and results
+  with progress bars. Supports account switching for testing.
+
+LivePolls.jsx
+  Live polling page displaying active, upcoming, and closed proposals
+  from demo data. Shows vote counts, status badges, and time remaining
+  for each proposal.
+
+Docs.jsx
+  Documentation page explaining the platform — getting started guide,
+  governance process, smart contract details, wallet integration, and
+  FAQ section. Built with expandable sections and modern styling.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/ — CSS FILES
+────────────────────────────────────────────────────────────────────────────────
+
+index.css
+  Global CSS with Tailwind directives, custom font imports (Inter),
+  CSS variables for the dark theme color palette, and base reset styles.
+
+homepage.css
+  Styles for the homepage — hero gradients, feature cards, statistics
+  counters, animated backgrounds, and responsive layout rules.
+
+Auth.css
+  Shared styles for Login and Signup pages — animated gradient
+  background, glassmorphic form cards, floating label inputs, and
+  social login buttons.
+
+profile.css
+  Styles for the UserProfile page — profile header, stats grid,
+  activity cards, and wallet info section.
+
+voting.css
+  Styles for the VotingPage — proposal cards, candidate selection,
+  vote buttons, progress bars, results display, and account switcher.
+
+livepolls.css
+  Styles for the LivePolls page — poll cards, status indicators,
+  progress bars, and responsive grid layout.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/components/
+────────────────────────────────────────────────────────────────────────────────
+
+Navbar.jsx
+  Global navigation bar component. Features a logo, navigation links
+  (Home, Live Polls, Docs, Profile), wallet connect button, and a
+  mobile hamburger menu. Sticky with blur-backdrop on scroll.
+
+Footer.jsx
+  Global footer component with platform branding, navigation links
+  organized by category (Platform, Resources, Community), social media
+  icons, newsletter subscription, and copyright notice.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/admin/
+────────────────────────────────────────────────────────────────────────────────
+
+AdminDashboard.jsx
+  Admin panel with sidebar navigation, overview statistics (total
+  proposals, active voters, participation rate), and tabs to switch
+  between Proposal Manager and Candidate Manager views.
+
+ProposalManager.jsx
+  Admin tool for creating and managing governance proposals. Provides
+  a form to add new proposals with title, description, candidates, and
+  duration. Lists existing proposals with status and action buttons.
+
+CandidateManager.jsx
+  Admin tool for managing candidates within proposals. Allows adding,
+  editing, and viewing candidates for each proposal.
+
+admin.css
+  Styles for the entire admin section — sidebar, dashboard cards,
+  data tables, form elements, and responsive admin layout.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/context/
+────────────────────────────────────────────────────────────────────────────────
+
+AuthContext.jsx
+  React Context for authentication state management. Provides login,
+  logout, and signup functions. Stores the current user in state and
+  makes it available app-wide via useContext.
+
+ProposalContext.jsx
+  React Context for proposal state management. Loads seed proposals
+  from demoData.js, provides functions to add new proposals and cast
+  votes, and shares proposal data across components.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/contracts/
+────────────────────────────────────────────────────────────────────────────────
+
+contractConfig.js
+  Frontend contract configuration. Exports:
+    - CONTRACT_ADDRESS: The deployed contract address (from deploy script)
+    - CONTRACT_ABI: Human-readable ABI for the GovChainVoting contract
+      (admin, voter, and view functions + events)
+    - HARDHAT_CHAIN_ID and HARDHAT_NETWORK: Network config for the
+      local Hardhat node.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/hooks/
+────────────────────────────────────────────────────────────────────────────────
+
+useContract.js
+  Custom React hook for interacting with the GovChainVoting smart
+  contract on the local Hardhat node. Provides:
+    - connect()        → Connect to the local Hardhat RPC
+    - switchAccount()  → Switch between Hardhat test accounts
+    - fetchProposals() → Fetch all proposals with candidates and vote data
+    - castVote()       → Submit a vote transaction
+  Uses ethers.js JsonRpcProvider (no MetaMask needed for local testing).
+
+useWallet.js
+  Custom React hook for real MetaMask wallet integration. Handles:
+    - Wallet connection via eth_requestAccounts
+    - Network detection and switching (targets Sepolia testnet)
+    - Message signing for authentication
+    - Account/chain change listeners
+    - Auto-reconnect from localStorage
+  Used by the WalletConnect page for production wallet flows.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/data/
+────────────────────────────────────────────────────────────────────────────────
+
+demoData.js
+  Demo/seed data for the frontend. Contains:
+    - DEMO_ADMIN credentials (admin@govchain.io / admin123)
+    - DEMO_USER credentials (user@govchain.io / user123)
+    - SEED_PROPOSALS: 5 sample proposals with titles, descriptions,
+      statuses (active/draft/closed), date ranges, and candidates
+      with vote counts and emoji avatars.
+    - generateId() helper for creating unique IDs.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  src/utils/
+────────────────────────────────────────────────────────────────────────────────
+
+toast.jsx
+  Reusable toast notification system. Provides:
+    - ToastProvider: Wraps the app to enable toast notifications
+    - useToast hook: Call addToast({ message, type }) from any component
+  Supports success, error, info, and warning types with auto-dismiss,
+  slide-in animation, and inline styling (no external CSS needed).
+
+================================================================================

@@ -43,12 +43,12 @@ export default function Signup() {
     const result = signup(formData.name, formData.email, formData.password);
     if (result.success) {
       addToast({
-        message: "Account created! Welcome to GovChain.",
+        message: "Account created! Welcome to VoteChain.",
         type: "success",
       });
       navigate("/");
     } else {
-      setError("Signup failed. Please try again.");
+      setError(result.error || "Signup failed. Please try again.");
     }
   };
 
@@ -76,28 +76,31 @@ export default function Signup() {
           {/* Header */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-5 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm">
-                G
-              </div>
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="9 11 12 14 22 4"></polyline>
+  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+</svg>
               <span className="text-xl font-bold text-text-primary">
-                GovChain
+                VoteChain
               </span>
             </Link>
             <h1 className="text-2xl font-bold text-text-primary mb-1">
-              Create Account
+              Create an Account
             </h1>
             <p className="text-sm text-text-muted">
-              Join the decentralized governance
+              Join the decentralized governance platform
             </p>
           </div>
 
+          {/* Error */}
           {error && (
             <div className="mb-5 p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-text-muted mb-2">
                 Full Name
@@ -105,13 +108,14 @@ export default function Signup() {
               <input
                 type="text"
                 name="name"
-                placeholder="Enter your name"
+                placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
                 required
                 className={inputClass}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-text-muted mb-2">
                 Email
@@ -119,13 +123,14 @@ export default function Signup() {
               <input
                 type="email"
                 name="email"
-                placeholder="Enter your email"
+                placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
                 className={inputClass}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-text-muted mb-2">
                 Password
@@ -140,6 +145,7 @@ export default function Signup() {
                 className={inputClass}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-text-muted mb-2">
                 Confirm Password
@@ -155,26 +161,37 @@ export default function Signup() {
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-text-muted cursor-pointer">
+            <div className="flex items-start gap-3 py-2">
               <input
                 type="checkbox"
                 required
-                className="w-4 h-4 rounded border-border bg-white/5 accent-primary"
+                className="mt-1 w-4 h-4 rounded border-border bg-white/5 accent-primary"
               />
-              I agree to the Terms of Service and Privacy Policy
-            </label>
+              <span className="text-xs text-text-muted leading-relaxed">
+                I agree to the{" "}
+                <a href="#" className="text-primary hover:underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-primary hover:underline">
+                  Privacy Policy
+                </a>
+                .
+              </span>
+            </div>
 
             <button
               type="submit"
-              className="w-full py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+              className="w-full py-3 mt-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
             >
-              Create Account
+              Sign Up
             </button>
           </form>
 
+          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted">Or continue with</span>
+            <span className="text-xs text-text-muted">Or signed up with</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -186,6 +203,7 @@ export default function Signup() {
             Connect with MetaMask
           </button>
 
+          {/* Footer */}
           <p className="text-center text-sm text-text-muted mt-6">
             Already have an account?{" "}
             <Link

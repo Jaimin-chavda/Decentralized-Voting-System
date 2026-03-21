@@ -16,8 +16,8 @@ const NETWORK_NAMES = {
 };
 
 // The chain we require for this app.
-const REQUIRED_CHAIN_ID = "0xaa36a7";
-const REQUIRED_CHAIN_NAME = "Sepolia Testnet";
+const REQUIRED_CHAIN_ID = "0x7a69";
+const REQUIRED_CHAIN_NAME = "Hardhat Local";
 
 // localStorage key for remembering connection.
 const LS_KEY = "walletConnected";
@@ -143,7 +143,7 @@ export default function useWallet() {
       const signer = await provider.getSigner();
 
       const nonce = Math.floor(Math.random() * 1000000).toString();
-      const message = `Sign this message to authenticate with GovChain.\n\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}`;
+      const message = `Sign this message to authenticate with VoteChain.\n\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}`;
 
       // MetaMask shows a signing popup (no gas cost).
       const signature = await signer.signMessage(message);

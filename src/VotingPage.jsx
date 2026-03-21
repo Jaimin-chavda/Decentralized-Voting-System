@@ -9,10 +9,8 @@ export default function VotingPage() {
     connected,
     loading,
     error,
-    accounts,
     activeAccount,
     connect,
-    switchAccount,
     fetchProposals,
     castVote,
   } = useContract();
@@ -99,26 +97,18 @@ export default function VotingPage() {
         <nav className="vote-nav">
           <div className="vote-nav-inner">
             <span className="vote-logo" onClick={() => navigate("/")}>
-              GovChain
+              VoteChain
             </span>
-            <span className="vote-nav-badge">Voting Demo</span>
           </div>
         </nav>
         <div className="vote-connect-screen">
           <div className="vote-connect-card">
             <div className="vote-connect-icon">🔗</div>
-            <h2>Connect to Local Blockchain</h2>
-            <p>Start the Hardhat node and deploy the contract first:</p>
-            <div className="vote-code-block">
-              <code>npx hardhat --config hardhat.config.cjs node</code>
-              <code>
-                npx hardhat --config hardhat.config.cjs run scripts/deploy.cjs
-                --network localhost
-              </code>
-            </div>
+            <h2>Connect Your Wallet</h2>
+            <p>Please connect your MetaMask wallet to cast your vote.</p>
             {error && <div className="vote-error-box">{error}</div>}
             <button className="vote-btn-primary" onClick={connect}>
-              Connect to Hardhat Node
+              Connect Wallet
             </button>
             <button
               className="vote-btn-secondary"
@@ -140,7 +130,7 @@ export default function VotingPage() {
         <div className="vote-connect-screen">
           <div className="vote-connect-card">
             <div className="vote-spinner" />
-            <p>Connecting to Hardhat node...</p>
+            <p>Connecting to MetaMask...</p>
           </div>
         </div>
       </div>
@@ -155,12 +145,11 @@ export default function VotingPage() {
       <nav className="vote-nav">
         <div className="vote-nav-inner">
           <span className="vote-logo" onClick={() => navigate("/")}>
-            GovChain
+            VoteChain
           </span>
           <div className="vote-nav-right">
-            <span className="vote-nav-badge">Voting Demo</span>
             <span className="vote-connection-dot" />
-            <span className="vote-connection-text">Hardhat Local</span>
+            <span className="vote-connection-text">Connected via MetaMask</span>
           </div>
         </div>
       </nav>
@@ -172,18 +161,14 @@ export default function VotingPage() {
             <span className="vote-account-icon">👤</span>
             Active Account:
           </div>
-          <select
-            className="vote-account-select"
-            value={activeAccount?.index ?? 0}
-            onChange={(e) => switchAccount(Number(e.target.value))}
-          >
-            {accounts.map((acc) => (
-              <option key={acc.index} value={acc.index}>
-                {acc.label} — {acc.address.slice(0, 6)}...
-                {acc.address.slice(-4)} ({Number(acc.balance).toFixed(0)} ETH)
-              </option>
-            ))}
-          </select>
+          {activeAccount && (
+            <div className="vote-account-display text-sm font-semibold text-text-primary px-4 py-2 rounded-lg bg-white/5 border border-white/10">
+              {activeAccount.address.slice(0, 6)}...{activeAccount.address.slice(-4)} 
+              <span className="text-text-muted ml-2 font-normal">
+                ({Number(activeAccount.balance).toFixed(4)} ETH)
+              </span>
+            </div>
+          )}
           <button
             className="vote-btn-refresh"
             onClick={loadProposals}
