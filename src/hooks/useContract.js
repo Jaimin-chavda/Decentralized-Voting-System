@@ -1,84 +1,93 @@
 import { useState, useCallback, useEffect } from "react";
-import { ethers } from "ethers";
+import { ethers, BrowserProvider } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/contractConfig";
 
-const HARDHAT_RPC = "http://127.0.0.1:8545";
-
 /**
- * Hook to interact with the GovChainVoting contract on the local Hardhat node.
- * Uses ethers JsonRpcProvider directly — no MetaMask needed for demo testing.
+ * Hook to interact with the VoteChainVoting contract via MetaMask.
  */
 export function useContract() {
   const [provider, setProvider] = useState(null);
-  const [accounts, setAccounts] = useState([]);
   const [activeAccount, setActiveAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Connect to the Hardhat local node
   const connect = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(HARDHAT_RPC);
-
-      // Test connection
-      await rpcProvider.getBlockNumber();
-
-      // Get all Hardhat accounts
-      const signers = [];
-      for (let i = 0; i < 5; i++) {
-        const signer = await rpcProvider.getSigner(i);
-        const address = await signer.getAddress();
-        const balance = await rpcProvider.getBalance(address);
-        signers.push({
-          index: i,
-          address,
-          balance: ethers.formatEther(balance),
-          signer,
-          label: i === 0 ? "Admin (Deployer)" : `Voter ${i}`,
-        });
+      if (!window.ethereum) {
+        throw new Error(
+          "MetaMask is not installed. Please install it to use this app."
+        );
       }
 
-      // Create contract instance
-      const firstSigner = signers[0].signer;
+      // Request account access
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      if (accounts.length === 0) {
+        throw new Error("No accounts found.");
+      }
+
+      const web3Provider = new BrowserProvider(window.ethereum);
+      const signer = await web3Provider.getSigner();
+      const address = await signer.getAddress();
+      const balance = await web3Provider.getBalance(address);
+
+      const accountObj = {
+        address,
+        balance: ethers.formatEther(balance),
+        signer,
+      };
+
       const contractInstance = new ethers.Contract(
         CONTRACT_ADDRESS,
         CONTRACT_ABI,
-        firstSigner,
+        signer
       );
 
-      setProvider(rpcProvider);
-      setAccounts(signers);
-      setActiveAccount(signers[0]);
+      setProvider(web3Provider);
+      setActiveAccount(accountObj);
       setContract(contractInstance);
       setConnected(true);
+
     } catch (err) {
-      setError(
-        "Cannot connect to Hardhat node. Make sure it is running:\n" +
-          "npx hardhat --config hardhat.config.cjs node",
-      );
+      console.error(err);
+      setError(err.message || "Failed to connect to MetaMask.");
       setConnected(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Switch active account
-  const switchAccount = useCallback(
-    (accountIndex) => {
-      const account = accounts.find((a) => a.index === accountIndex);
-      if (account && contract) {
-        setActiveAccount(account);
-        setContract(
-          new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, account.signer),
-        );
-      }
-    },
-    [accounts, contract],
-  );
+  // Listen for account/chain changes
+  useEffect(() => {
+    if (window.ethereum) {
+      const handleAccountsChanged = (accounts) => {
+        if (accounts.length === 0) {
+          setConnected(false);
+          setActiveAccount(null);
+          setContract(null);
+        } else {
+          connect();
+        }
+      };
+      const handleChainChanged = () => window.location.reload();
+
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
+      window.ethereum.on("chainChanged", handleChainChanged);
+
+      return () => {
+        if (window.ethereum.removeListener) {
+          window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+          window.ethereum.removeListener("chainChanged", handleChainChanged);
+        }
+      };
+    }
+  }, [connect]);
+
 
   // Fetch all proposals
   const fetchProposals = useCallback(async () => {
@@ -99,7 +108,6 @@ export function useContract() {
           });
         }
 
-        // Check if the active account has voted
         let voted = false;
         if (activeAccount) {
           voted = await contract.hasVoted(i, activeAccount.address);
@@ -129,24 +137,17 @@ export function useContract() {
     async (proposalId, candidateIndex) => {
       if (!contract) throw new Error("Not connected");
       const tx = await contract.vote(proposalId, candidateIndex);
-      await tx.wait();
+      await tx.wait(); // wait for block confirmation
     },
-    [contract],
+    [contract]
   );
-
-  // Auto-connect when the hook mounts
-  useEffect(() => {
-    connect();
-  }, [connect]);
 
   return {
     connected,
     loading,
     error,
-    accounts,
     activeAccount,
     connect,
-    switchAccount,
     fetchProposals,
     castVote,
   };

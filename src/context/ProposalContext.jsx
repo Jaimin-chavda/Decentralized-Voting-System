@@ -9,8 +9,8 @@ import { SEED_PROPOSALS } from "../data/demoData";
 
 const ProposalContext = createContext(null);
 
-const LS_PROPOSALS_KEY = "govchain_proposals";
-const LS_VOTES_KEY = "govchain_user_votes"; // track which user voted on which proposal
+const LS_PROPOSALS_KEY = "votechain_proposals";
+const LS_VOTES_KEY = "votechain_user_votes"; // track which user voted on which proposal
 
 // Hook to access proposals from any component
 export function useProposals() {

@@ -76,11 +76,12 @@ export default function UserProfile() {
       <header className="sticky top-0 z-40 bg-bg-dark/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm">
-              G
-            </div>
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="9 11 12 14 22 4"></polyline>
+  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+</svg>
             <span className="text-lg font-bold text-text-primary">
-              GovChain
+              VoteChain
             </span>
           </Link>
           <div className="flex items-center gap-3">

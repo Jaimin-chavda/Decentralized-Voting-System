@@ -6,12 +6,12 @@ const sections = [
   {
     id: "introduction",
     title: "Introduction",
-    content: `GovChain is a decentralized governance (DAO) platform built on Ethereum that enables transparent, trustless decision-making through blockchain-based voting.\n\nOur platform allows communities to:\n- Create and manage governance proposals\n- Vote on-chain with full transparency\n- Track treasury allocations in real time\n- Delegate voting power to trusted representatives`,
+    content: `VoteChain is a decentralized governance (DAO) platform built on Ethereum that enables transparent, trustless decision-making through blockchain-based voting.\n\nOur platform allows communities to:\n- Create and manage governance proposals\n- Vote on-chain with full transparency\n- Track treasury allocations in real time\n- Delegate voting power to trusted representatives`,
   },
   {
     id: "smart-contract",
     title: "Smart Contract",
-    content: `The GovChain smart contract is deployed on the Sepolia testnet and handles proposal creation, vote casting, and result tallying.\n\n**Contract Address:**\n\`0x5FbDB2315678afecb367f032d93F642f64180aa3\`\n\n**Key Functions:**\n- \`createProposal(string title, string description)\` — Creates a new proposal\n- \`vote(uint proposalId, uint candidateId)\` — Casts a vote for a candidate\n- \`getProposals()\` — Returns all proposals with their current state\n- \`getResults(uint proposalId)\` — Returns final vote counts`,
+    content: `The VoteChain smart contract is deployed on the Sepolia testnet and handles proposal creation, vote casting, and result tallying.\n\n**Contract Address:**\n\`0x5FbDB2315678afecb367f032d93F642f64180aa3\`\n\n**Key Functions:**\n- \`createProposal(string title, string description)\` — Creates a new proposal\n- \`vote(uint proposalId, uint candidateId)\` — Casts a vote for a candidate\n- \`getProposals()\` — Returns all proposals with their current state\n- \`getResults(uint proposalId)\` — Returns final vote counts`,
     code: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -48,7 +48,7 @@ contract VotingSystem {
   {
     id: "api-integration",
     title: "API Integration",
-    content: `GovChain uses ethers.js to interact with the deployed smart contract. The \`useContract\` hook abstracts the complexity of blockchain interactions.\n\n**Setup Requirements:**\n- MetaMask browser extension\n- Connected to Sepolia testnet\n- Test ETH for gas fees (available from faucets)`,
+    content: `VoteChain uses ethers.js to interact with the deployed smart contract. The \`useContract\` hook abstracts the complexity of blockchain interactions.\n\n**Setup Requirements:**\n- MetaMask browser extension\n- Connected to Sepolia testnet\n- Test ETH for gas fees (available from faucets)`,
     code: `import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, ABI } from './contractConfig';
 

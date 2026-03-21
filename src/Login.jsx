@@ -30,7 +30,7 @@ export default function Login() {
       if (result.role === "admin") navigate("/admin");
       else navigate("/");
     } else {
-      setError("Invalid email or password. Try the demo credentials below.");
+      setError(result.error || "Invalid email or password.");
     }
   };
 
@@ -56,11 +56,12 @@ export default function Login() {
           {/* Header */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-5 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm">
-                G
-              </div>
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="9 11 12 14 22 4"></polyline>
+  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+</svg>
               <span className="text-xl font-bold text-text-primary">
-                GovChain
+                VoteChain
               </span>
             </Link>
             <h1 className="text-2xl font-bold text-text-primary mb-1">
@@ -129,12 +130,6 @@ export default function Login() {
               Sign In
             </button>
           </form>
-
-          {/* Demo Hint */}
-          <div className="mt-5 p-3 rounded-xl bg-primary/5 border border-primary/10 text-xs text-text-muted">
-            <strong className="text-primary">Demo:</strong> admin@govchain.io /
-            admin123 (admin) or user@govchain.io / user123 (user)
-          </div>
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-6">

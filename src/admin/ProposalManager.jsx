@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
-import { generateId } from '../data/demoData';
+import React, { useState } from "react";
+import { generateId } from "../data/demoData";
 
 // Status badge color map
 const STATUS_STYLES = {
-  active: 'status-badge-active',
-  draft: 'status-badge-draft',
-  closed: 'status-badge-closed',
+  active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  draft: "bg-neutral-500/10 text-neutral-400 border-neutral-500/20",
+  closed: "bg-danger/10 text-danger border-danger/20",
 };
 
-const STATUS_CYCLE = { draft: 'active', active: 'closed', closed: 'draft' };
+const STATUS_CYCLE = { draft: "active", active: "closed", closed: "draft" };
 
 export default function ProposalManager({ proposals, setProposals }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null); // proposal id or 'new'
-  const [form, setForm] = useState({ title: '', description: '', startDate: '', endDate: '' });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    startDate: "",
+    endDate: "",
+  });
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   // Filtered list
@@ -23,8 +28,8 @@ export default function ProposalManager({ proposals, setProposals }) {
 
   // Open create form
   const handleNew = () => {
-    setForm({ title: '', description: '', startDate: '', endDate: '' });
-    setEditing('new');
+    setForm({ title: "", description: "", startDate: "", endDate: "" });
+    setEditing("new");
   };
 
   // Open edit form
@@ -42,11 +47,11 @@ export default function ProposalManager({ proposals, setProposals }) {
   const handleSave = () => {
     if (!form.title.trim()) return;
 
-    if (editing === 'new') {
+    if (editing === "new") {
       const newProposal = {
         id: generateId(),
         ...form,
-        status: 'draft',
+        status: "draft",
         candidates: [],
       };
       setProposals((prev) => [newProposal, ...prev]);
@@ -68,79 +73,94 @@ export default function ProposalManager({ proposals, setProposals }) {
   const toggleStatus = (id) => {
     setProposals((prev) =>
       prev.map((p) =>
-        p.id === id ? { ...p, status: STATUS_CYCLE[p.status] || 'draft' } : p
+        p.id === id ? { ...p, status: STATUS_CYCLE[p.status] || "draft" } : p
       )
     );
   };
 
   // Compute total votes for a proposal
-  const totalVotes = (p) => (p.candidates || []).reduce((s, c) => s + c.votes, 0);
+  const totalVotes = (p) =>
+    (p.candidates || []).reduce((s, c) => s + c.votes, 0);
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Toolbar */}
-      <div className="admin-toolbar">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white/5 p-4 rounded-2xl border border-white/5">
         <input
           type="text"
-          className="admin-search"
-          placeholder="🔍  Search proposals…"
+          className="w-full sm:max-w-sm px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+          placeholder="🔍 Search proposals…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn btn-primary" onClick={handleNew}>
+        <button
+          className="px-6 py-2.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+          onClick={handleNew}
+        >
           + Add Proposal
         </button>
       </div>
 
       {/* Inline form (create / edit) */}
       {editing !== null && (
-        <div className="admin-form-card">
-          <h3 className="admin-form-title">
-            {editing === 'new' ? 'Create Proposal' : 'Edit Proposal'}
+        <div className="glass rounded-2xl p-6 border border-primary/20 shadow-xl shadow-black/20 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
+          <h3 className="text-xl font-bold text-text-primary mb-6">
+            {editing === "new" ? "Create Proposal" : "Edit Proposal"}
           </h3>
-          <div className="admin-form-grid">
-            <div className="admin-form-group">
-              <label>Title</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-muted">Title</label>
               <input
-                className="form-input"
+                className="w-full px-4 py-2.5 bg-black/20 border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/50 transition-all"
                 placeholder="Proposal title"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </div>
-            <div className="admin-form-group admin-form-full">
-              <label>Description</label>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-text-muted">Description</label>
               <textarea
-                className="form-input admin-textarea"
+                className="w-full px-4 py-3 bg-black/20 border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/50 transition-all min-h-[100px] resize-y"
                 placeholder="Describe the proposal…"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
               />
             </div>
-            <div className="admin-form-group">
-              <label>Start Date</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-muted">Start Date</label>
               <input
                 type="date"
-                className="form-input"
+                className="w-full px-4 py-2.5 bg-black/20 border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/50 transition-all"
                 value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, startDate: e.target.value })
+                }
               />
             </div>
-            <div className="admin-form-group">
-              <label>End Date</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-muted">End Date</label>
               <input
                 type="date"
-                className="form-input"
+                className="w-full px-4 py-2.5 bg-black/20 border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/50 transition-all"
                 value={form.endDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
             </div>
           </div>
-          <div className="admin-form-actions">
-            <button className="btn btn-primary" onClick={handleSave}>
-              {editing === 'new' ? 'Create' : 'Save Changes'}
+          <div className="flex gap-4 border-t border-border pt-6">
+            <button
+              className="px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all"
+              onClick={handleSave}
+            >
+              {editing === "new" ? "Create" : "Save Changes"}
             </button>
-            <button className="btn btn-secondary" onClick={() => setEditing(null)}>
+            <button
+              className="px-6 py-2.5 bg-white/10 text-text-primary font-semibold rounded-xl hover:bg-white/20 transition-all"
+              onClick={() => setEditing(null)}
+            >
               Cancel
             </button>
           </div>
@@ -148,48 +168,82 @@ export default function ProposalManager({ proposals, setProposals }) {
       )}
 
       {/* Proposal list */}
-      <div className="admin-list">
+      <div className="grid gap-4">
         {filtered.length === 0 && (
-          <div className="admin-empty">No proposals found.</div>
+          <div className="text-center py-12 glass rounded-2xl flex flex-col items-center justify-center opacity-70">
+            <span className="text-4xl mb-3">📭</span>
+            <p className="text-text-muted font-medium">No proposals found.</p>
+          </div>
         )}
         {filtered.map((p) => (
-          <div key={p.id} className="admin-card">
-            <div className="admin-card-header">
-              <div>
+          <div
+            key={p.id}
+            className="glass rounded-2xl p-6 border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all flex flex-col gap-4 group"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
                 <button
-                  className={`status-badge ${STATUS_STYLES[p.status]}`}
+                  className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded border ${
+                    STATUS_STYLES[p.status]
+                  } hover:scale-105 active:scale-95 transition-all mt-1`}
                   onClick={() => toggleStatus(p.id)}
-                  title="Click to change status"
+                  title="Click to toggle status"
                 >
-                  {p.status.toUpperCase()}
+                  {p.status}
                 </button>
-                <h3 className="admin-card-title">{p.title}</h3>
+                <h3 className="text-lg font-bold text-text-primary leading-snug">
+                  {p.title}
+                </h3>
               </div>
-              <div className="admin-card-actions">
-                <button className="admin-icon-btn" onClick={() => handleEdit(p)} title="Edit">
+              <div className="flex items-center gap-2 self-end sm:self-auto opacity-100 sm:opacity-50 group-hover:opacity-100 transition-opacity">
+                <button
+                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg transition-all"
+                  onClick={() => handleEdit(p)}
+                  title="Edit"
+                >
                   ✏️
                 </button>
                 {confirmDelete === p.id ? (
-                  <>
-                    <button className="admin-icon-btn admin-icon-danger" onClick={() => handleDelete(p.id)}>
-                      Confirm
+                  <div className="flex items-center gap-2 bg-danger/10 border border-danger/20 rounded-xl p-1">
+                    <button
+                      className="px-3 py-1.5 text-xs font-bold text-white bg-danger rounded-lg hover:bg-red-600 transition-all"
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      Delete
                     </button>
-                    <button className="admin-icon-btn" onClick={() => setConfirmDelete(null)}>
-                      ✗
+                    <button
+                      className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-white"
+                      onClick={() => setConfirmDelete(null)}
+                    >
+                      ✕
                     </button>
-                  </>
+                  </div>
                 ) : (
-                  <button className="admin-icon-btn" onClick={() => setConfirmDelete(p.id)} title="Delete">
+                  <button
+                    className="w-10 h-10 rounded-xl bg-danger/10 text-danger hover:bg-danger hover:text-white flex items-center justify-center text-lg transition-all"
+                    onClick={() => setConfirmDelete(p.id)}
+                    title="Delete"
+                  >
                     🗑️
                   </button>
                 )}
               </div>
             </div>
-            <p className="admin-card-desc">{p.description}</p>
-            <div className="admin-card-meta">
-              <span>📅 {p.startDate || '—'} → {p.endDate || '—'}</span>
-              <span>👥 {(p.candidates || []).length} candidates</span>
-              <span>🗳️ {totalVotes(p)} votes</span>
+            
+            <p className="text-sm text-text-muted leading-relaxed line-clamp-2">
+              {p.description}
+            </p>
+            
+            <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-text-muted pt-2 border-t border-border">
+              <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
+                📅 {p.startDate || "—"} → {p.endDate || "—"}
+              </span>
+              <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
+                👥 {(p.candidates || []).length} Candidates
+              </span>
+              <span className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-md">
+                🗳️ {totalVotes(p)} Votes
+              </span>
             </div>
           </div>
         ))}

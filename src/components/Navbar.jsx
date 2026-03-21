@@ -22,6 +22,7 @@ export default function Navbar() {
   }, [location.pathname]);
 
   const navLinks = [
+    { href: "/vote", label: "Campaigns" },
     { href: "/#features", label: "Features" },
     { href: "/#how", label: "How it Works" },
     { href: "/docs", label: "Docs" },
@@ -45,20 +46,21 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 lg:h-18">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm">
-              G
-            </div>
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="9 11 12 14 22 4"></polyline>
+  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+</svg>
             <span className="text-xl font-bold text-text-primary group-hover:text-primary transition-colors duration-300">
-              GovChain
+              VoteChain
             </span>
           </Link>
 
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
-                href={link.href}
+                to={link.href}
                 className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg group ${
                   isActive(link.href)
                     ? "text-primary"
@@ -70,7 +72,7 @@ export default function Navbar() {
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-primary to-accent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 {/* Hover background */}
                 <span className="absolute inset-0 rounded-lg bg-white/5 scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300" />
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -150,13 +152,13 @@ export default function Navbar() {
           >
             <div className="px-6 py-4 space-y-1">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className="block px-4 py-3 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-white/5 rounded-lg transition-all duration-200"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <div className="pt-3 border-t border-border space-y-2">
                 {isAuthenticated ? (
