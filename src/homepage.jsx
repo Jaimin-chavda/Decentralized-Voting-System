@@ -142,12 +142,12 @@ export default function Homepage() {
                 custom={3}
                 className="flex flex-wrap justify-center gap-4"
               >
-                <a
-                  href="/signup"
+                <Link
+                  to="/signup"
                   className="px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-2xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
                 >
                   Get Started
-                </a>
+                </Link>
                 <Link
                   to="/vote"
                   className="px-7 py-3.5 text-sm font-semibold text-text-primary glass rounded-2xl hover:bg-white/10 transition-all duration-300"
@@ -326,12 +326,12 @@ export default function Homepage() {
               custom={2}
               className="relative flex flex-wrap gap-4 justify-center"
             >
-              <a
-                href="/signup"
+              <Link
+                to="/signup"
                 className="px-8 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-2xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
               >
                 Get Started Free
-              </a>
+              </Link>
               <a
                 href="/docs"
                 className="px-8 py-3.5 text-sm font-semibold text-text-primary glass rounded-2xl hover:bg-white/10 transition-all duration-300"
