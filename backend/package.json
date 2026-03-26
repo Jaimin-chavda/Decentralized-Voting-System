@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm install",
     "dev": "node --watch server/index.js",
     "start": "node server/index.js"
   },
