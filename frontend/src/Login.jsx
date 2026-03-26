@@ -21,13 +21,13 @@ export default function Login() {
   const { login } = useAuth();
   const { addToast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const result = login(email, password);
+    const result = await login(email, password);
     if (result.success) {
       addToast({ message: "Signed in successfully!", type: "success" });
-      if (result.role === "admin") navigate("/admin");
+      if (String(result.role || "").includes("ADMIN") || result.role === "admin") navigate("/admin");
       else navigate("/");
     } else {
       setError(result.error || "Invalid email or password.");
@@ -88,6 +88,7 @@ export default function Login() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-border rounded-xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
               />
@@ -102,6 +103,7 @@ export default function Login() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-border rounded-xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
               />
