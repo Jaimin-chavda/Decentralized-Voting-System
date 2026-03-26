@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import 'dotenv/config';
 // Native fetch available in Node.js 18+
 
 // Import your models
@@ -9,8 +10,8 @@ import Class from "./models/Class.js";
 import User from "./models/User.js";
 import WhitelistEntry from "./models/WhitelistEntry.js";
 
-// MongoDB URI matching your server
-const MONGO_URI = "mongodb://127.0.0.1:27017/votechain";
+// MongoDB URI matching your server (Uses cloud URI if available)
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/votechain";
 
 async function runTest() {
   console.log("🚀 Starting Production-Like API Test...\n");
