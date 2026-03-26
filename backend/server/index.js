@@ -13,8 +13,25 @@ connectDB();
 const app = express();
 
 // Middleware
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
-app.use(cors({ origin: allowedOrigin }));
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser tools (Postman/curl) and same-origin server calls
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+  })
+);
 app.use(express.json());
 
 // Basic Route
