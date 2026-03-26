@@ -38,14 +38,14 @@ export default function AdminDashboard() {
     0
   );
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const result = login(loginEmail, loginPassword);
-    if (result.success && result.role === "admin") {
+    const result = await login(loginEmail, loginPassword);
+    if (result.success && (String(result.role || "").includes("ADMIN") || result.role === "admin")) {
       setLoginError("");
       addToast({ message: "Welcome, Admin!", type: "success" });
     } else {
-      setLoginError("Invalid credentials. Try admin@votechain.io / admin123");
+      setLoginError(result.error || "Invalid admin credentials.");
     }
   };
 

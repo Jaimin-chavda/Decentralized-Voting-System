@@ -1,10 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./db.js";
-
-// Import Controllers (to be created)
-import { registerUser } from "./controllers/authController.js";
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -15,7 +13,8 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
 
 // Basic Route
@@ -23,9 +22,11 @@ app.get("/", (req, res) => {
   res.send("VoteChain API is running...");
 });
 
-// Authentication/Registration Route
-// Endpoint to verify whitelist and register a user
-app.post("/api/auth/register", registerUser);
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

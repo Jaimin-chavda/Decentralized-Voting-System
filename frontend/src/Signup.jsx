@@ -29,7 +29,7 @@ export default function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (formData.password !== formData.confirmPassword) {
@@ -40,7 +40,7 @@ export default function Signup() {
       setError("Password must be at least 6 characters.");
       return;
     }
-    const result = signup(formData.name, formData.email, formData.password);
+    const result = await signup(formData.name, formData.email, formData.password);
     if (result.success) {
       addToast({
         message: "Account created! Welcome to VoteChain.",
@@ -111,6 +111,7 @@ export default function Signup() {
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
+                autoComplete="name"
                 required
                 className={inputClass}
               />
@@ -126,6 +127,7 @@ export default function Signup() {
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="email"
                 required
                 className={inputClass}
               />
@@ -141,6 +143,7 @@ export default function Signup() {
                 placeholder="Create a password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="new-password"
                 required
                 className={inputClass}
               />
@@ -156,6 +159,7 @@ export default function Signup() {
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="new-password"
                 required
                 className={inputClass}
               />
