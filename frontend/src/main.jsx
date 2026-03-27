@@ -9,12 +9,12 @@ import { ProposalProvider } from "./context/ProposalContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AuthProvider>
-      <ProposalProvider>
-        <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ProposalProvider>
           <App />
-        </ToastProvider>
-      </ProposalProvider>
-    </AuthProvider>
+        </ProposalProvider>
+      </AuthProvider>
+    </ToastProvider>
   </BrowserRouter>,
 );

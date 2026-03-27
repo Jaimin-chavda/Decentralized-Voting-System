@@ -4,7 +4,7 @@ import { generateId } from "../data/demoData";
 // Emoji avatar options for quick selection
 const AVATARS = ["👤", "👩", "🧑", "👩‍💻", "👨‍💼", "🧑‍🔬", "👷", "🦸"];
 
-export default function CandidateManager({ proposals, setProposals }) {
+export default function CandidateManager({ proposals, updateProposal }) {
   const [selectedProposalId, setSelectedProposalId] = useState(
     proposals.length > 0 ? proposals[0].id : ""
   );
@@ -33,57 +33,43 @@ export default function CandidateManager({ proposals, setProposals }) {
   };
 
   // Save (create or update)
-  const handleSave = () => {
-    if (!form.name.trim()) return;
-
-    setProposals((prev) =>
-      prev.map((p) => {
-        if (p.id !== selectedProposalId) return p;
-
-        if (editing === "new") {
-          return {
-            ...p,
-            candidates: [
-              ...p.candidates,
-              {
-                id: generateId(),
-                name: form.name,
-                party: form.party,
-                avatar: form.avatar,
-                votes: 0,
-              },
-            ],
-          };
-        }
-        return {
-          ...p,
-          candidates: p.candidates.map((c) =>
-            c.id === editing
-              ? {
-                  ...c,
-                  name: form.name,
-                  party: form.party,
-                  avatar: form.avatar,
-                }
-              : c
-          ),
-        };
-      })
-    );
+  const handleSave = async () => {
+    if (!form.name.trim() || !selectedProposal) return;
+    
+    let newCandidates;
+    if (editing === "new") {
+      newCandidates = [
+        ...selectedProposal.candidates,
+        {
+          name: form.name,
+          party: form.party,
+          avatar: form.avatar,
+          votes: 0,
+        },
+      ];
+    } else {
+      newCandidates = selectedProposal.candidates.map((c) =>
+        c.id === editing
+          ? {
+              ...c,
+              name: form.name,
+              party: form.party,
+              avatar: form.avatar,
+            }
+          : c
+      );
+    }
+    
+    await updateProposal(selectedProposal.id, { candidates: newCandidates });
     setEditing(null);
   };
 
   // Delete candidate
-  const handleDelete = (candidateId) => {
-    setProposals((prev) =>
-      prev.map((p) => {
-        if (p.id !== selectedProposalId) return p;
-        return {
-          ...p,
-          candidates: p.candidates.filter((c) => c.id !== candidateId),
-        };
-      })
-    );
+  const handleDelete = async (candidateId) => {
+    if (!selectedProposal) return;
+    
+    const newCandidates = selectedProposal.candidates.filter(c => c.id !== candidateId);
+    await updateProposal(selectedProposal.id, { candidates: newCandidates });
     setConfirmDelete(null);
   };
 
