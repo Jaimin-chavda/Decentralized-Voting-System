@@ -6,7 +6,7 @@
  */
 
 // Replace this with the deployed contract address from the deploy script
-export const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const CONTRACT_ADDRESS = "0x8AC40393d870366b1c662F8369eA14883B4e1c2F";
 
 // ABI — only the functions the frontend needs
 // (full ABI is in artifacts/contracts/VoteChainVoting.sol/VoteChainVoting.json)
@@ -32,11 +32,12 @@ export const CONTRACT_ABI = [
   "event ProposalEnded(uint256 indexed proposalId)",
 ];
 
-// Hardhat localhost network
-export const HARDHAT_CHAIN_ID = "0x7a69"; // 31337 in hex
+// Sepolia Testnet network
+export const HARDHAT_CHAIN_ID = "0xaa36a7"; // 11155111 in hex
 export const HARDHAT_NETWORK = {
   chainId: HARDHAT_CHAIN_ID,
-  chainName: "Hardhat Localhost",
-  rpcUrls: ["http://127.0.0.1:8545"],
-  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+  chainName: "Sepolia test network",
+  rpcUrls: ["https://sepolia.infura.io/v3/"], 
+  nativeCurrency: { name: "SepoliaETH", symbol: "SEP", decimals: 18 },
+  blockExplorerUrls: ["https://sepolia.etherscan.io"],
 };

@@ -1,15 +1,15 @@
 // ─── Demo Admin Credentials ──────────────────────────────────────────
 export const DEMO_ADMIN = {
-  email: 'admin@votechain.io',
-  password: 'admin123',
-  name: 'Admin',
+  email: '',
+  password: '',
+  name: '',
 };
 
 // Demo regular user credentials
 export const DEMO_USER = {
-  email: 'user@votechain.io',
-  password: 'user123',
-  name: 'Jaimin',
+  email: '',
+  password: '',
+  name: '',
 };
 
 // ─── Helper ──────────────────────────────────────────────────────────
