@@ -17,6 +17,7 @@ export default function ProposalManager({ proposals, addProposal, updateProposal
     description: "",
     startDate: "",
     endDate: "",
+    initialCandidates: "",
   });
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -27,7 +28,7 @@ export default function ProposalManager({ proposals, addProposal, updateProposal
 
   // Open create form
   const handleNew = () => {
-    setForm({ title: "", description: "", startDate: "", endDate: "" });
+    setForm({ title: "", description: "", startDate: "", endDate: "", initialCandidates: "" });
     setEditing("new");
   };
 
@@ -38,6 +39,7 @@ export default function ProposalManager({ proposals, addProposal, updateProposal
       description: proposal.description,
       startDate: proposal.startDate,
       endDate: proposal.endDate,
+      initialCandidates: (proposal.candidates || []).map(c => c.name).join(", "),
     });
     setEditing(proposal.id);
   };
@@ -47,12 +49,17 @@ export default function ProposalManager({ proposals, addProposal, updateProposal
     if (!form.title.trim()) return;
 
     if (editing === "new") {
+      const candidateNames = form.initialCandidates
+        ? form.initialCandidates.split(",").map((n) => n.trim()).filter((n) => n)
+        : [];
       await addProposal({
         ...form,
         status: "draft",
-        candidates: [],
+        candidates: candidateNames,
       });
     } else {
+      // For updates, we manage candidates in the other tab or we could parse here too
+      // But let's keep it simple for now as per plan
       await updateProposal(editing, { ...form });
     }
     setEditing(null);
@@ -142,6 +149,24 @@ export default function ProposalManager({ proposals, addProposal, updateProposal
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
             </div>
+            {editing === "new" && (
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-text-muted">
+                  Initial Candidates (Optional)
+                </label>
+                <textarea
+                  className="w-full px-4 py-3 bg-black/20 border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/50 transition-all min-h-[80px] resize-y"
+                  placeholder="Enter candidate names separated by commas (e.g. Alice, Bob, Charlie)"
+                  value={form.initialCandidates}
+                  onChange={(e) =>
+                    setForm({ ...form, initialCandidates: e.target.value })
+                  }
+                />
+                <p className="text-[10px] text-text-muted italic">
+                  * You can also add/edit candidates later in the "Manage Candidates" tab.
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex gap-4 border-t border-border pt-6">
             <button
