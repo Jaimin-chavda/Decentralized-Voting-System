@@ -5,12 +5,10 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { SEED_PROPOSALS } from "../data/demoData";
+import { ethers, JsonRpcProvider } from "ethers";
+import { CONTRACT_ADDRESS, CONTRACT_ABI, HARDHAT_NETWORK } from "../contracts/contractConfig";
 
 const ProposalContext = createContext(null);
-
-const LS_PROPOSALS_KEY = "votechain_proposals";
-const LS_VOTES_KEY = "votechain_user_votes"; // track which user voted on which proposal
 
 // Hook to access proposals from any component
 export function useProposals() {
@@ -21,93 +19,78 @@ export function useProposals() {
 }
 
 export function ProposalProvider({ children }) {
-  // Initialize from localStorage or fall back to seed data
-  const [proposals, setProposals] = useState(() => {
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProposals = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(LS_PROPOSALS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      setLoading(true);
+      // Use a read-only provider for fetching public data (works without MetaMask)
+      const provider = new JsonRpcProvider(HARDHAT_NETWORK.rpcUrls[0]);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+      const count = await contract.proposalCount();
+      const fetchedProposals = [];
+
+      for (let i = 1; i <= Number(count); i++) {
+        const p = await contract.getProposal(i);
+        const candidates = [];
+        for (let j = 0; j < Number(p.candidateCount); j++) {
+          const c = await contract.getCandidate(i, j);
+          // Standardizing structure to match existing React UI
+          candidates.push({
+            id: j,
+            name: c.name,
+            votes: Number(c.voteCount),
+          });
+        }
+
+        fetchedProposals.push({
+          id: Number(p.id),
+          title: p.title,
+          description: p.description,
+          startTime: Number(p.startTime),
+          endTime: Number(p.endTime),
+          active: p.active,
+          candidates,
+          totalVotes: candidates.reduce((sum, c) => sum + c.votes, 0),
+        });
       }
-    } catch {
-      /* ignore corrupt data */
+      setProposals(fetchedProposals);
+    } catch (err) {
+      console.error("Error fetching read-only proposals:", err);
+    } finally {
+      setLoading(false);
     }
-    return SEED_PROPOSALS;
-  });
+  }, []);
 
-  // Track votes per user: { "user@email.com": ["proposalId1", "proposalId2"] }
-  const [userVotes, setUserVotes] = useState(() => {
-    try {
-      const stored = localStorage.getItem(LS_VOTES_KEY);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      /* ignore */
-    }
-    return {};
-  });
-
-  // Persist proposals to localStorage
   useEffect(() => {
-    localStorage.setItem(LS_PROPOSALS_KEY, JSON.stringify(proposals));
-  }, [proposals]);
+    fetchProposals();
+  }, [fetchProposals]);
 
-  // Persist votes to localStorage
-  useEffect(() => {
-    localStorage.setItem(LS_VOTES_KEY, JSON.stringify(userVotes));
-  }, [userVotes]);
+  // Legacy castVote fallback - LivePolls still calls this, but it shouldn't work 
+  // without a wallet. Real voting happens in VotingPage.jsx using useContract.
+  const castVote = useCallback(() => {
+    console.warn("castVote called from ProposalContext. Please connect MetaMask in the Voting tab to vote.");
+    return false; // Force UI to handle failure or redirect
+  }, []);
 
-  // Check if a user has voted on a proposal
-  const hasUserVoted = useCallback(
-    (userEmail, proposalId) => {
-      if (!userEmail) return false;
-      return (userVotes[userEmail] || []).includes(proposalId);
-    },
-    [userVotes],
-  );
+  const hasUserVoted = useCallback(() => {
+    return false; // True read state is fetched in VotingPage.jsx per user account
+  }, []);
 
-  // Cast a vote — increment candidate vote count and mark user as voted
-  const castVote = useCallback(
-    (userEmail, proposalId, candidateId) => {
-      if (!userEmail) return false;
-
-      // Check if already voted
-      if ((userVotes[userEmail] || []).includes(proposalId)) return false;
-
-      // Update proposals
-      setProposals((prev) =>
-        prev.map((p) => {
-          if (p.id !== proposalId) return p;
-          return {
-            ...p,
-            candidates: (p.candidates || []).map((c) =>
-              c.id === candidateId ? { ...c, votes: c.votes + 1 } : c,
-            ),
-          };
-        }),
-      );
-
-      // Mark user as voted
-      setUserVotes((prev) => ({
-        ...prev,
-        [userEmail]: [...(prev[userEmail] || []), proposalId],
-      }));
-
-      return true;
-    },
-    [userVotes],
-  );
-
-  // Get only active proposals (for homepage)
-  const activeProposals = proposals.filter((p) => p.status === "active");
+  // Get only active proposals
+  const activeProposals = proposals.filter((p) => p.active);
 
   return (
     <ProposalContext.Provider
       value={{
         proposals,
-        setProposals,
+        setProposals: fetchProposals, // Map set to fetch to allow manual refresh
         activeProposals,
         castVote,
         hasUserVoted,
+        loading
       }}
     >
       {children}

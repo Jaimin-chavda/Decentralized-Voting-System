@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
         email: data.email,
         role: data.role,
         isWhitelisted: data.isWhitelisted,
+        token: data.token,
       };
 
       setUser(sessionUser);
@@ -78,6 +79,7 @@ export function AuthProvider({ children }) {
         email: data.email,
         role: data.role,
         isWhitelisted: data.isWhitelisted,
+        token: data.token,
       };
 
       setUser(sessionUser);

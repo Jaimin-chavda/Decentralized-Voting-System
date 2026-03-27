@@ -36,10 +36,42 @@ export default function Signup() {
       setError("Passwords do not match!");
       return;
     }
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    
+    // Password Validation Rules
+    const pw = formData.password;
+    if (pw.length < 8 || pw.length > 20) {
+      setError("Password must be between 8 and 20 characters long.");
       return;
     }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pw)) {
+      setError("Password must contain at least one special character.");
+      return;
+    }
+    if (/^\d+$/.test(pw)) {
+      setError("Password cannot contain only numbers.");
+      return;
+    }
+    
+    const lowerPw = pw.toLowerCase();
+    if (formData.name && lowerPw.includes(formData.name.toLowerCase())) {
+      setError("Password must not contain your name.");
+      return;
+    }
+    if (formData.email) {
+      const emailObj = formData.email.trim().toLowerCase();
+      // Enforce university email domain
+      if (!emailObj.endsWith("@charusat.edu.in")) {
+        setError("Only university accounts (@charusat.edu.in) are allowed to register.");
+        return;
+      }
+      
+      const emailPrefix = emailObj.split('@')[0];
+      if (lowerPw.includes(emailPrefix)) {
+        setError("Password must not contain your email address.");
+        return;
+      }
+    }
+
     const result = await signup(formData.name, formData.email, formData.password);
     if (result.success) {
       addToast({
