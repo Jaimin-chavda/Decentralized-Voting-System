@@ -1,65 +1,49 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useContract } from "./hooks/useContract";
+import { useProposals } from "./context/ProposalContext";
 import "./voting.css";
 
 export default function VotingPage() {
   const navigate = useNavigate();
   const {
     connected,
-    loading,
-    error,
+    loading: walletLoading,
+    error: walletError,
     activeAccount,
     connect,
-    fetchProposals,
-    castVote,
+    castVoteLine, // renamed to avoid conflict
   } = useContract();
 
-  const [proposals, setProposals] = useState([]);
+  const { 
+    proposals, 
+    loading: proposalsLoading, 
+    fetchProposals,
+    castVote: castDbVote 
+  } = useProposals();
+
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [voting, setVoting] = useState(false);
   const [voteError, setVoteError] = useState("");
   const [voteSuccess, setVoteSuccess] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch proposals when connected or account changes
-  const loadProposals = useCallback(async () => {
-    if (!connected) return;
-    setRefreshing(true);
-    const data = await fetchProposals();
-    setProposals(data);
-    // Refresh selected proposal too
+  // Refresh selected proposal if props change
+  useEffect(() => {
     if (selectedProposal) {
-      const updated = data.find((p) => p.id === selectedProposal.id);
+      const updated = proposals.find((p) => p.id === selectedProposal.id);
       if (updated) setSelectedProposal(updated);
     }
-    setRefreshing(false);
-  }, [connected, fetchProposals, selectedProposal?.id]);
-
-  useEffect(() => {
-    loadProposals();
-  }, [connected, activeAccount]);
+  }, [proposals]);
 
   // Handle vote
-  const handleVote = async (proposalId, candidateIndex, candidateName) => {
+  const handleVote = async (proposalId, candidateId, candidateName) => {
     setVoting(true);
     setVoteError("");
     setVoteSuccess("");
     try {
-      await castVote(proposalId, candidateIndex);
-      setVoteSuccess(`Vote cast for "${candidateName}" successfully!`);
-      await loadProposals();
-    } catch (err) {
-      const msg = err.message || "";
-      if (msg.includes("Already voted")) {
-        setVoteError("You have already voted on this proposal.");
-      } else if (msg.includes("not active")) {
-        setVoteError("This proposal is no longer active.");
-      } else if (msg.includes("Voting period has ended")) {
-        setVoteError("The voting period has ended.");
-      } else {
-        setVoteError("Vote failed: " + msg.slice(0, 100));
+      const success = await castDbVote(proposalId, candidateId);
+      if (success) {
+        setVoteSuccess(`Vote cast for "${candidateName}" successfully!`);
       }
+    } catch (err) {
+      setVoteError("Vote failed: " + err.message);
     } finally {
       setVoting(false);
     }
@@ -91,7 +75,7 @@ export default function VotingPage() {
 
   // ── Not Connected ──────────────────────────────────────────────
 
-  if (!connected && !loading) {
+  if (!connected && !walletLoading) {
     return (
       <div className="vote-page">
         <nav className="vote-nav">
@@ -106,7 +90,7 @@ export default function VotingPage() {
             <div className="vote-connect-icon">🔗</div>
             <h2>Connect Your Wallet</h2>
             <p>Please connect your MetaMask wallet to cast your vote.</p>
-            {error && <div className="vote-error-box">{error}</div>}
+            {walletError && <div className="vote-error-box">{walletError}</div>}
             <button className="vote-btn-primary" onClick={connect}>
               Connect Wallet
             </button>
@@ -124,13 +108,13 @@ export default function VotingPage() {
 
   // ── Loading ────────────────────────────────────────────────────
 
-  if (loading) {
+  if (walletLoading || (proposalsLoading && proposals.length === 0)) {
     return (
       <div className="vote-page">
         <div className="vote-connect-screen">
           <div className="vote-connect-card">
             <div className="vote-spinner" />
-            <p>Connecting to MetaMask...</p>
+            <p>Loading...</p>
           </div>
         </div>
       </div>
@@ -165,17 +149,17 @@ export default function VotingPage() {
             <div className="vote-account-display text-sm font-semibold text-text-primary px-4 py-2 rounded-lg bg-white/5 border border-white/10">
               {activeAccount.address.slice(0, 6)}...{activeAccount.address.slice(-4)} 
               <span className="text-text-muted ml-2 font-normal">
-                ({Number(activeAccount.balance).toFixed(4)} ETH)
+                ({Number(activeAccount.balance || 0).toFixed(4)} ETH)
               </span>
             </div>
           )}
           <button
             className="vote-btn-refresh"
-            onClick={loadProposals}
-            disabled={refreshing}
+            onClick={fetchProposals}
+            disabled={proposalsLoading}
             title="Refresh proposals"
           >
-            {refreshing ? "⟳" : "🔄"}
+            {proposalsLoading ? "⟳" : "🔄"}
           </button>
         </div>
 
@@ -215,7 +199,7 @@ export default function VotingPage() {
                   <span>👥 {p.candidates.length} candidates</span>
                 </div>
                 <div className="vote-proposal-time">
-                  {timeRemaining(p.endTime)}
+                  {getTimeRemaining(p.endDate)}
                 </div>
                 {p.hasVoted && (
                   <div className="vote-voted-tag">✓ You voted</div>
@@ -259,13 +243,13 @@ export default function VotingPage() {
                   <div className="vote-info-item">
                     <span className="vote-info-label">Start</span>
                     <span className="vote-info-value">
-                      {formatTime(selectedProposal.startTime)}
+                      {formatDate(selectedProposal.startDate)}
                     </span>
                   </div>
                   <div className="vote-info-item">
                     <span className="vote-info-label">End</span>
                     <span className="vote-info-value">
-                      {formatTime(selectedProposal.endTime)}
+                      {formatDate(selectedProposal.endDate)}
                     </span>
                   </div>
                   <div className="vote-info-item">
@@ -277,7 +261,7 @@ export default function VotingPage() {
                   <div className="vote-info-item">
                     <span className="vote-info-label">Time Left</span>
                     <span className="vote-info-value">
-                      {timeRemaining(selectedProposal.endTime)}
+                      {getTimeRemaining(selectedProposal.endDate)}
                     </span>
                   </div>
                 </div>
@@ -299,11 +283,11 @@ export default function VotingPage() {
                 <div className="vote-candidates-grid">
                   {selectedProposal.candidates.map((c) => {
                     const pct = getVotePercent(
-                      c.voteCount,
+                      c.votes,
                       selectedProposal.totalVotes,
                     );
                     return (
-                      <div key={c.index} className="vote-candidate-card">
+                      <div key={c.id} className="vote-candidate-card">
                         <div className="vote-candidate-top">
                           <div className="vote-candidate-avatar">
                             {c.name.charAt(0).toUpperCase()}
@@ -311,25 +295,24 @@ export default function VotingPage() {
                           <div className="vote-candidate-info">
                             <h4>{c.name}</h4>
                             <span className="vote-candidate-votes">
-                              {c.voteCount} vote{c.voteCount !== 1 ? "s" : ""}
+                              {c.votes} vote{c.votes !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          {selectedProposal.active &&
-                            !selectedProposal.hasVoted && (
-                              <button
-                                className="vote-btn-vote"
-                                disabled={voting}
-                                onClick={() =>
-                                  handleVote(
-                                    selectedProposal.id,
-                                    c.index,
-                                    c.name,
-                                  )
-                                }
-                              >
-                                {voting ? "..." : "Vote"}
-                              </button>
-                            )}
+                          {selectedProposal.active && (
+                            <button
+                              className="vote-btn-vote"
+                              disabled={voting}
+                              onClick={() =>
+                                handleVote(
+                                  selectedProposal.id,
+                                  c.id,
+                                  c.name,
+                                )
+                              }
+                            >
+                              {voting ? "..." : "Vote"}
+                            </button>
+                          )}
                         </div>
                         <div className="vote-bar-track">
                           <div

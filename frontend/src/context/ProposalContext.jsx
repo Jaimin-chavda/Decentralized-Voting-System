@@ -5,12 +5,11 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { ethers, JsonRpcProvider } from "ethers";
-import { CONTRACT_ADDRESS, CONTRACT_ABI, HARDHAT_NETWORK } from "../contracts/contractConfig";
+import { apiRequest } from "../manage/apiClient";
+import { useToast } from "../utils/toast";
 
 const ProposalContext = createContext(null);
 
-// Hook to access proposals from any component
 export function useProposals() {
   const ctx = useContext(ProposalContext);
   if (!ctx)
@@ -21,44 +20,31 @@ export function useProposals() {
 export function ProposalProvider({ children }) {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
   const fetchProposals = useCallback(async () => {
     try {
       setLoading(true);
-      // Use a read-only provider for fetching public data (works without MetaMask)
-      const provider = new JsonRpcProvider(HARDHAT_NETWORK.rpcUrls[0]);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-
-      const count = await contract.proposalCount();
-      const fetchedProposals = [];
-
-      for (let i = 1; i <= Number(count); i++) {
-        const p = await contract.getProposal(i);
-        const candidates = [];
-        for (let j = 0; j < Number(p.candidateCount); j++) {
-          const c = await contract.getCandidate(i, j);
-          // Standardizing structure to match existing React UI
-          candidates.push({
-            id: j,
-            name: c.name,
-            votes: Number(c.voteCount),
-          });
-        }
-
-        fetchedProposals.push({
-          id: Number(p.id),
-          title: p.title,
-          description: p.description,
-          startTime: Number(p.startTime),
-          endTime: Number(p.endTime),
-          active: p.active,
-          candidates,
-          totalVotes: candidates.reduce((sum, c) => sum + c.votes, 0),
-        });
-      }
-      setProposals(fetchedProposals);
+      const data = await apiRequest("/api/proposals", { method: "GET" });
+      
+      // Standardize to match expected UI structure
+      const formatted = data.map(p => ({
+        id: p._id, // MongoDB ObjectId
+        title: p.title,
+        description: p.description,
+        startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : "",
+        endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : "",
+        status: p.status === "ACTIVE" ? "active" : (p.status === "DRAFT" ? "draft" : "closed"),
+        candidates: p.candidates || [],
+        totalVotes: p.totalVotes || 0,
+        active: p.status === "ACTIVE",
+         // Store raw data for edits
+         _raw: p
+      }));
+      setProposals(formatted);
     } catch (err) {
-      console.error("Error fetching read-only proposals:", err);
+      console.error("Error fetching proposals from MongoDB:", err);
+      // Fallback or handle error
     } finally {
       setLoading(false);
     }
@@ -68,29 +54,91 @@ export function ProposalProvider({ children }) {
     fetchProposals();
   }, [fetchProposals]);
 
-  // Legacy castVote fallback - LivePolls still calls this, but it shouldn't work 
-  // without a wallet. Real voting happens in VotingPage.jsx using useContract.
-  const castVote = useCallback(() => {
-    console.warn("castVote called from ProposalContext. Please connect MetaMask in the Voting tab to vote.");
-    return false; // Force UI to handle failure or redirect
-  }, []);
+  // Methods for Admin Dashboard to mutate Atlas DB
+  const addProposal = async (proposalData) => {
+    try {
+      await apiRequest("/api/proposals", {
+        method: "POST",
+        body: JSON.stringify({
+          title: proposalData.title,
+          description: proposalData.description,
+          startDate: proposalData.startDate,
+          endDate: proposalData.endDate,
+          candidates: proposalData.candidates || [],
+          // Map local 'active'/'draft' to 'ACTIVE'/'DRAFT'
+          status: proposalData.status === "active" ? "ACTIVE" : "DRAFT"
+        })
+      });
+      addToast({ message: "Proposal saved to Database", type: "success" });
+      fetchProposals();
+    } catch (err) {
+      addToast({ message: err.message, type: "error" });
+    }
+  };
+
+  const updateProposal = async (id, updates) => {
+    try {
+      await apiRequest(`/api/proposals/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          ...updates,
+          status: updates.status === "active" ? "ACTIVE" : (updates.status === "draft" ? "DRAFT" : "ENDED")
+        })
+      });
+      addToast({ message: "Proposal updated in Database", type: "success" });
+      fetchProposals();
+    } catch (err) {
+      addToast({ message: err.message, type: "error" });
+    }
+  };
+
+  const deleteProposal = async (id) => {
+    try {
+      await apiRequest(`/api/proposals/${id}`, { method: "DELETE" });
+      addToast({ message: "Proposal deleted", type: "success" });
+      fetchProposals();
+    } catch (err) {
+      addToast({ message: err.message, type: "error" });
+    }
+  };
+
+  const castVote = async (proposalId, candidateId) => {
+    try {
+      await apiRequest(`/api/proposals/${proposalId}/vote`, {
+        method: "POST",
+        body: JSON.stringify({ candidateId })
+      });
+      addToast({ message: "Vote cast successfully!", type: "success" });
+      fetchProposals();
+      return true;
+    } catch (err) {
+      addToast({ message: err.message, type: "error" });
+      return false;
+    }
+  };
 
   const hasUserVoted = useCallback(() => {
-    return false; // True read state is fetched in VotingPage.jsx per user account
+    return false; // Handled dynamically in backend when fetching single proposal
   }, []);
 
-  // Get only active proposals
-  const activeProposals = proposals.filter((p) => p.active);
+  const activeProposals = proposals.filter((p) => p.active || p.status === "active");
 
   return (
     <ProposalContext.Provider
       value={{
         proposals,
-        setProposals: fetchProposals, // Map set to fetch to allow manual refresh
         activeProposals,
+        loading,
+        fetchProposals,
+        
+        // Admin actions
+        addProposal,
+        updateProposal,
+        deleteProposal,
+        
+        // User actions
         castVote,
-        hasUserVoted,
-        loading
+        hasUserVoted
       }}
     >
       {children}

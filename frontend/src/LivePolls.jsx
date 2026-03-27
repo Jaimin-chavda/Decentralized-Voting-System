@@ -24,7 +24,7 @@ export default function LivePolls() {
 
   const handleVote = (proposalId, candidateId) => {
     if (!isAuthenticated) return;
-    castVote(proposalId, candidateId, user.email);
+    castVote(proposalId, candidateId);
     setJustVoted(candidateId);
     setTimeout(() => setJustVoted(null), 800);
   };

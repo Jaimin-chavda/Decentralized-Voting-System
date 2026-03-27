@@ -1,11 +1,16 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import dns from "dns";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import proposalRoutes from "./routes/proposalRoutes.js";
 
 // Load environment variables
 dotenv.config();
+
+// Override local network DNS (fixes querySrv ECONNREFUSED)
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 // Connect to MongoDB
 connectDB();
@@ -52,6 +57,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/proposals", proposalRoutes);
 
 const PORT = process.env.PORT || 5000;
 

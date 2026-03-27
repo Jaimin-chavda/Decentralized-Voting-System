@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { generateId } from "../data/demoData";
 
-// Status badge color map
 const STATUS_STYLES = {
   active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   draft: "bg-neutral-500/10 text-neutral-400 border-neutral-500/20",
@@ -10,7 +9,7 @@ const STATUS_STYLES = {
 
 const STATUS_CYCLE = { draft: "active", active: "closed", closed: "draft" };
 
-export default function ProposalManager({ proposals, setProposals }) {
+export default function ProposalManager({ proposals, addProposal, updateProposal, deleteProposal }) {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null); // proposal id or 'new'
   const [form, setForm] = useState({
@@ -44,38 +43,32 @@ export default function ProposalManager({ proposals, setProposals }) {
   };
 
   // Save (create or update)
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim()) return;
 
     if (editing === "new") {
-      const newProposal = {
-        id: generateId(),
+      await addProposal({
         ...form,
         status: "draft",
         candidates: [],
-      };
-      setProposals((prev) => [newProposal, ...prev]);
+      });
     } else {
-      setProposals((prev) =>
-        prev.map((p) => (p.id === editing ? { ...p, ...form } : p))
-      );
+      await updateProposal(editing, { ...form });
     }
     setEditing(null);
   };
 
   // Delete proposal
-  const handleDelete = (id) => {
-    setProposals((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = async (id) => {
+    await deleteProposal(id);
     setConfirmDelete(null);
   };
 
   // Toggle status
-  const toggleStatus = (id) => {
-    setProposals((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, status: STATUS_CYCLE[p.status] || "draft" } : p
-      )
-    );
+  const toggleStatus = async (id) => {
+    const proposal = proposals.find(p => p.id === id);
+    if (!proposal) return;
+    await updateProposal(id, { status: STATUS_CYCLE[proposal.status] || "draft" });
   };
 
   // Compute total votes for a proposal

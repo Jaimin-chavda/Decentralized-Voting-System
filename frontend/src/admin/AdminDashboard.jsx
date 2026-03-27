@@ -24,7 +24,12 @@ export default function AdminDashboard() {
   const [loginError, setLoginError] = useState("");
 
   const [activeTab, setActiveTab] = useState("proposals");
-  const { proposals, setProposals } = useProposals();
+  const { 
+    proposals, 
+    addProposal, 
+    updateProposal, 
+    deleteProposal 
+  } = useProposals();
   const { addToast } = useToast();
 
   const totalProposals = proposals.length;
@@ -272,13 +277,15 @@ export default function AdminDashboard() {
             {activeTab === "proposals" && (
               <ProposalManager
                 proposals={proposals}
-                setProposals={setProposals}
+                addProposal={addProposal}
+                updateProposal={updateProposal}
+                deleteProposal={deleteProposal}
               />
             )}
             {activeTab === "candidates" && (
               <CandidateManager
                 proposals={proposals}
-                setProposals={setProposals}
+                updateProposal={updateProposal}
               />
             )}
           </div>
