@@ -31,6 +31,20 @@ export function useContract() {
         throw new Error("No accounts found.");
       }
 
+      // Force network switch
+      const hexChainId = await window.ethereum.request({ method: "eth_chainId" });
+      const HARDHAT_CHAIN_ID_HEX = "0xaa36a7"; // Sepolia
+      if (hexChainId !== HARDHAT_CHAIN_ID_HEX) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: HARDHAT_CHAIN_ID_HEX }],
+          });
+        } catch (switchError) {
+          throw new Error("Please manually switch network to Sepolia in MetaMask.");
+        }
+      }
+
       const web3Provider = new BrowserProvider(window.ethereum);
       const signer = await web3Provider.getSigner();
       const address = await signer.getAddress();
