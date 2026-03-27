@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { BrowserProvider } from "ethers";
+import { HARDHAT_CHAIN_ID, HARDHAT_NETWORK } from "../contracts/contractConfig";
 
 // Network Configuration
 const NETWORK_NAMES = {
@@ -16,8 +17,8 @@ const NETWORK_NAMES = {
 };
 
 // The chain we require for this app.
-const REQUIRED_CHAIN_ID = "0x7a69";
-const REQUIRED_CHAIN_NAME = "Hardhat Local";
+const REQUIRED_CHAIN_ID = HARDHAT_CHAIN_ID;
+const REQUIRED_CHAIN_NAME = HARDHAT_NETWORK.chainName;
 
 // localStorage key for remembering connection.
 const LS_KEY = "walletConnected";
@@ -160,6 +161,40 @@ export default function useWallet() {
     }
   }, [account]);
 
+  // ─── Switch Network ──────────────────────────────
+  const switchNetwork = useCallback(async () => {
+    if (!window.ethereum) return;
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: REQUIRED_CHAIN_ID }],
+      });
+    } catch (err) {
+      if (err.code === 4902) {
+        // Network not added to MetaMask, add it automatically
+        try {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: REQUIRED_CHAIN_ID,
+                chainName: REQUIRED_CHAIN_NAME,
+                rpcUrls: HARDHAT_NETWORK.rpcUrls,
+                nativeCurrency: HARDHAT_NETWORK.nativeCurrency,
+                blockExplorerUrls: HARDHAT_NETWORK.blockExplorerUrls,
+              },
+            ],
+          });
+        } catch (addError) {
+          console.error("Failed to add network:", addError);
+          setError("Failed to add Sepolia network. Please add it manually.");
+        }
+      } else {
+        console.error("Failed to switch network:", err);
+      }
+    }
+  }, []);
+
   // ─── Read Contract Example ───────────────────────
   const readContractExample = useCallback(async () => {
     if (!window.ethereum) {
@@ -254,6 +289,7 @@ export default function useWallet() {
     disconnectWallet,
     authenticateWithSignature,
     readContractExample,
+    switchNetwork,
     clearError,
   };
 }

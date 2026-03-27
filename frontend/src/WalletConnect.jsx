@@ -32,6 +32,7 @@ export default function WalletConnect() {
     disconnectWallet,
     authenticateWithSignature,
     readContractExample,
+    switchNetwork,
     clearError,
   } = useWallet();
 
@@ -152,9 +153,17 @@ export default function WalletConnect() {
             )}
 
             {isWrongNetwork && (
-              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm text-left">
-                ⚠️ Wrong network. Please switch to{" "}
-                <strong>{requiredChainName}</strong> in MetaMask.
+              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm text-left flex flex-col gap-2">
+                <span>
+                  ⚠️ Wrong network. Please switch to{" "}
+                  <strong>{requiredChainName}</strong>.
+                </span>
+                <button
+                  onClick={switchNetwork}
+                  className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-xs font-bold transition-all w-fit border border-amber-500/30 shadow-sm"
+                >
+                  Switch Network Automatically
+                </button>
               </div>
             )}
 
