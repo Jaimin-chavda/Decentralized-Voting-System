@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useContract } from "./hooks/useContract";
 import { useProposals } from "./context/ProposalContext";
 import "./voting.css";
 
@@ -9,7 +12,7 @@ export default function VotingPage() {
     error: walletError,
     activeAccount,
     connect,
-    castVoteLine, // renamed to avoid conflict
+    castVote: castVoteLine, // renamed to avoid conflict
   } = useContract();
 
   const { 
@@ -50,20 +53,28 @@ export default function VotingPage() {
   };
 
   // Format timestamp
-  const formatTime = (ts) => {
+  const formatDate = (ts) => {
     if (!ts) return "—";
-    return new Date(ts * 1000).toLocaleString();
+    // Check if ts is a Firestore-like timestamp or a Date/ISO string
+    if (ts && typeof ts === 'object' && ts.seconds) {
+        return new Date(ts.seconds * 1000).toLocaleString();
+    }
+    return new Date(ts).toLocaleString();
   };
 
   // Calculate time remaining
-  const timeRemaining = (endTime) => {
-    const now = Date.now() / 1000;
-    const diff = endTime - now;
+  const getTimeRemaining = (endTime) => {
+    if (!endTime) return "N/A";
+    const end = new Date(endTime).getTime();
+    const now = Date.now();
+    const diff = end - now;
+    
     if (diff <= 0) return "Ended";
-    const days = Math.floor(diff / 86400);
-    const hours = Math.floor((diff % 86400) / 3600);
+    
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
     if (days > 0) return `${days}d ${hours}h remaining`;
-    const mins = Math.floor((diff % 3600) / 60);
+    const mins = Math.floor((diff % 3600000) / 60000);
     return `${hours}h ${mins}m remaining`;
   };
 

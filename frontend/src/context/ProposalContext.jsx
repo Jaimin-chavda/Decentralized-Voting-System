@@ -78,12 +78,14 @@ export function ProposalProvider({ children }) {
 
   const updateProposal = async (id, updates) => {
     try {
+      const payload = { ...updates };
+      if (updates.status) {
+        payload.status = updates.status === "active" ? "ACTIVE" : (updates.status === "draft" ? "DRAFT" : "ENDED");
+      }
+      
       await apiRequest(`/api/proposals/${id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          ...updates,
-          status: updates.status === "active" ? "ACTIVE" : (updates.status === "draft" ? "DRAFT" : "ENDED")
-        })
+        body: JSON.stringify(payload)
       });
       addToast({ message: "Proposal updated in Database", type: "success" });
       fetchProposals();
