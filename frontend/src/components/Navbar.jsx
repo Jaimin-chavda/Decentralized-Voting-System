@@ -106,12 +106,14 @@ export default function Navbar() {
                 </Link>
               </>
             )}
-            <button
-              onClick={() => navigate("/wallet-connect")}
-              className="relative px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
-            >
-              Connect Wallet
-            </button>
+            {isAuthenticated && (
+              <button
+                onClick={() => navigate("/wallet-connect")}
+                className="relative px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
+              >
+                Connect Wallet
+              </button>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -184,12 +186,14 @@ export default function Navbar() {
                     </Link>
                   </>
                 )}
-                <button
-                  onClick={() => navigate("/wallet-connect")}
-                  className="w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl text-center"
-                >
-                  Connect Wallet
-                </button>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => navigate("/wallet-connect")}
+                    className="w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl text-center"
+                  >
+                    Connect Wallet
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

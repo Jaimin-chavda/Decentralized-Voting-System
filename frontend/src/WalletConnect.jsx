@@ -45,6 +45,14 @@ export default function WalletConnect() {
   const [detecting, setDetecting] = useState(true);
   const canConnect = isMetaMaskInstalled || canDeepLinkMetaMask;
 
+  // Authenticated guard — Wallet connection is only permitted after sign-in.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      addToast({ message: "Please sign in first to connect your wallet.", type: "warning" });
+      navigate("/login?redirect=/wallet-connect");
+    }
+  }, [isAuthenticated, navigate, addToast]);
+
   // ─── Auto-detect MetaMask (check only, no connect) ───
   useEffect(() => {
     // Give the browser 600ms to inject window.ethereum

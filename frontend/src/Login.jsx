@@ -27,8 +27,14 @@ export default function Login() {
     const result = await login(email, password);
     if (result.success) {
       addToast({ message: "Signed in successfully!", type: "success" });
-      if (String(result.role || "").includes("ADMIN") || result.role === "admin") navigate("/admin");
-      else navigate("/");
+      
+      // If admin, go to admin dashboard
+      if (String(result.role || "").includes("ADMIN") || result.role === "admin") {
+        navigate("/admin");
+      } else {
+        // Otherwise, go to voting page (which will then prompt for wallet if needed)
+        navigate("/vote");
+      }
     } else {
       setError(result.error || "Invalid email or password.");
     }
@@ -133,21 +139,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted">Or continue with</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* Wallet Button */}
-          <button
-            onClick={() => navigate("/wallet-connect")}
-            className="w-full py-3 text-sm font-semibold text-text-primary glass rounded-xl hover:bg-white/[0.08] transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <span className="text-lg">🦊</span>
-            Connect with MetaMask
-          </button>
 
           {/* Footer */}
           <p className="text-center text-sm text-text-muted mt-6">
