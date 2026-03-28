@@ -20,8 +20,8 @@ const NETWORK_NAMES = {
 const REQUIRED_CHAIN_ID = HARDHAT_CHAIN_ID;
 const REQUIRED_CHAIN_NAME = HARDHAT_NETWORK.chainName;
 
-// localStorage key for remembering connection.
-const LS_KEY = "walletConnected";
+// sessionStorage key for remembering connection.
+const SS_KEY = "walletConnected";
 const MOBILE_UA_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 const LOCALHOST_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -167,7 +167,7 @@ export default function useWallet() {
 
       if (accounts.length > 0) {
         setAccount(accounts[0]);
-        localStorage.setItem(LS_KEY, "true");
+        sessionStorage.setItem(SS_KEY, "true");
         await fetchNetwork();
       }
     } catch (err) {
@@ -192,7 +192,7 @@ export default function useWallet() {
     setNetwork(null);
     setChainId(null);
     setError(null);
-    localStorage.removeItem(LS_KEY);
+    sessionStorage.removeItem(SS_KEY);
   }, []);
 
   // ─── Sign-Message Authentication ─────────────────
@@ -290,7 +290,7 @@ export default function useWallet() {
   //   2. window.ethereum.isMetaMask is true (not Hardhat provider)
   useEffect(() => {
     const autoReconnect = async () => {
-      if (localStorage.getItem(LS_KEY) !== "true") return;
+      if (sessionStorage.getItem(SS_KEY) !== "true") return;
       const provider = getPreferredInjectedProvider();
       if (!provider) return;
 
@@ -303,7 +303,7 @@ export default function useWallet() {
           await fetchNetwork();
         } else {
           // MetaMask is locked or revoked. Clean up.
-          localStorage.removeItem(LS_KEY);
+          sessionStorage.removeItem(SS_KEY);
         }
       } catch (err) {
         console.error("Auto-reconnect failed:", err);
