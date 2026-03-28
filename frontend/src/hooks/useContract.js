@@ -17,9 +17,15 @@ export function useContract() {
     setLoading(true);
     setError("");
     try {
+      const isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(
+        navigator?.userAgent || ""
+      );
+
       if (!window.ethereum) {
         throw new Error(
-          "MetaMask is not installed. Please install it to use this app."
+          isMobile
+            ? "MetaMask was not detected in this browser. Open this site inside the MetaMask app browser to connect."
+            : "MetaMask is not installed. Please install the MetaMask browser extension to use this app."
         );
       }
 

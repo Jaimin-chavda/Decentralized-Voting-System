@@ -22,6 +22,7 @@ const REQUIRED_CHAIN_NAME = HARDHAT_NETWORK.chainName;
 
 // localStorage key for remembering connection.
 const LS_KEY = "walletConnected";
+const MOBILE_UA_REGEX = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i;
 
 // Helper: shorten address for display
 export function shortenAddress(address) {
@@ -43,14 +44,20 @@ export default function useWallet() {
   const [chainId, setChainId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
 
   // Derived state
   const isConnected = !!account;
   const isWrongNetwork = isConnected && chainId !== REQUIRED_CHAIN_ID;
+  const canDeepLinkMetaMask = isMobileDevice && !isMetaMaskInstalled;
 
   // ─── Detect MetaMask (not just any provider) ────
   useEffect(() => {
+    const ua = navigator?.userAgent || "";
+    const mobile = MOBILE_UA_REGEX.test(ua);
+    setIsMobileDevice(mobile);
+
     // window.ethereum can be injected by MetaMask, Hardhat, or other wallets.
     // We specifically check for MetaMask's flag.
     const ethereum = window.ethereum;
@@ -79,7 +86,17 @@ export default function useWallet() {
   // even if the site was previously approved. This makes the user
   // explicitly choose which account to connect each time.
   const connectWallet = useCallback(async () => {
-    if (!window.ethereum || !window.ethereum.isMetaMask) {
+    const hasMMProvider = !!(window.ethereum && window.ethereum.isMetaMask);
+
+    if (!hasMMProvider) {
+      if (isMobileDevice) {
+        const currentUrl = window.location.href || "";
+        const normalizedUrl = currentUrl.replace(/^https?:\/\//, "");
+        const deepLink = `https://metamask.app.link/dapp/${encodeURIComponent(normalizedUrl)}`;
+        window.location.href = deepLink;
+        return;
+      }
+
       setError(
         "MetaMask is not installed. Please install the MetaMask browser extension from metamask.io.",
       );
@@ -121,7 +138,7 @@ export default function useWallet() {
     } finally {
       setLoading(false);
     }
-  }, [fetchNetwork]);
+  }, [fetchNetwork, isMobileDevice]);
 
   // ─── Disconnect Wallet ────────────────────────────
   const disconnectWallet = useCallback(() => {
@@ -281,7 +298,9 @@ export default function useWallet() {
     loading,
     error,
     isConnected,
+    isMobileDevice,
     isMetaMaskInstalled,
+    canDeepLinkMetaMask,
     isWrongNetwork,
     requiredChainName: REQUIRED_CHAIN_NAME,
 
