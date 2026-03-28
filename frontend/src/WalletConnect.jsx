@@ -25,7 +25,9 @@ export default function WalletConnect() {
     loading,
     error,
     isConnected,
+    isMobileDevice,
     isMetaMaskInstalled,
+    canDeepLinkMetaMask,
     isWrongNetwork,
     requiredChainName,
     connectWallet,
@@ -39,6 +41,7 @@ export default function WalletConnect() {
   const { addToast } = useToast();
   const [contractResult, setContractResult] = useState(null);
   const [detecting, setDetecting] = useState(true);
+  const canConnect = isMetaMaskInstalled || canDeepLinkMetaMask;
 
   // ─── Auto-detect MetaMask (check only, no connect) ───
   useEffect(() => {
@@ -275,29 +278,35 @@ export default function WalletConnect() {
             <p className="text-sm text-text-muted">
               {isMetaMaskInstalled
                 ? "MetaMask detected! Click below to open the MetaMask popup and approve the connection."
-                : "MetaMask extension was not found in your browser. Install it first."}
+                : isMobileDevice
+                  ? "Mobile browser detected. Tap connect to open this site in the MetaMask app."
+                  : "MetaMask extension was not found in your browser. Install it first."}
             </p>
           </div>
 
           {/* Detection Status Banner */}
           <div
             className={`mb-6 p-4 rounded-xl border text-sm flex items-center gap-3 ${
-              isMetaMaskInstalled
+              canConnect
                 ? "bg-success/5 border-success/20 text-success"
                 : "bg-danger/5 border-danger/20 text-danger"
             }`}
           >
-            <span className="text-lg">{isMetaMaskInstalled ? "🦊" : "❌"}</span>
+            <span className="text-lg">{canConnect ? "🦊" : "❌"}</span>
             <div>
               <div className="font-medium">
                 {isMetaMaskInstalled
                   ? "MetaMask Detected"
-                  : "MetaMask Not Found"}
+                  : canDeepLinkMetaMask
+                    ? "MetaMask Mobile Ready"
+                    : "MetaMask Not Found"}
               </div>
               <div className="text-xs opacity-80 mt-0.5">
                 {isMetaMaskInstalled
                   ? "Your browser has the MetaMask extension. Click the button below to connect."
-                  : "Install MetaMask from metamask.io to continue."}
+                  : canDeepLinkMetaMask
+                    ? "You can open this dapp directly in MetaMask on your phone."
+                    : "Install MetaMask from metamask.io to continue."}
               </div>
             </div>
           </div>
@@ -329,30 +338,32 @@ export default function WalletConnect() {
               {/* MetaMask Connect Button */}
               <button
                 onClick={handleConnect}
-                disabled={!isMetaMaskInstalled}
+                disabled={!canConnect}
                 className={`w-full p-6 rounded-2xl border text-center transition-all duration-300 mb-6 relative group ${
-                  isMetaMaskInstalled
+                  canConnect
                     ? "glass hover:bg-white/[0.08] hover:border-primary/30 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
                     : "bg-white/[0.02] border-border/50 opacity-50 cursor-not-allowed"
                 }`}
               >
-                {isMetaMaskInstalled && (
+                {canConnect && (
                   <span className="absolute top-3 right-3 text-[10px] font-bold text-success bg-success/10 px-2 py-1 rounded-lg uppercase tracking-wider">
                     Ready
                   </span>
                 )}
                 <div className="text-5xl mb-3">🦊</div>
                 <h3 className="text-lg font-bold text-text-primary mb-1">
-                  MetaMask
+                  {canDeepLinkMetaMask ? "Open in MetaMask" : "MetaMask"}
                 </h3>
                 <p className="text-sm text-text-muted">
                   {isMetaMaskInstalled
                     ? "Click to open MetaMask popup and select your account"
-                    : "Extension not detected — install from metamask.io"}
+                    : canDeepLinkMetaMask
+                      ? "Tap to launch the MetaMask app and continue there"
+                      : "Extension not detected — install from metamask.io"}
                 </p>
-                {isMetaMaskInstalled && (
+                {canConnect && (
                   <div className="mt-3 inline-flex items-center gap-2 text-xs text-primary font-semibold">
-                    Click to connect →
+                    {canDeepLinkMetaMask ? "Tap to open app →" : "Click to connect →"}
                   </div>
                 )}
               </button>
@@ -390,12 +401,18 @@ export default function WalletConnect() {
 
               {!isMetaMaskInstalled && (
                 <a
-                  href="https://metamask.io/download/"
+                  href={
+                    isMobileDevice
+                      ? "https://metamask.app.link/"
+                      : "https://metamask.io/download/"
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary to-accent rounded-xl hover:shadow-lg hover:shadow-primary/25 text-center transition-all duration-300 mb-4"
                 >
-                  Install MetaMask →
+                  {isMobileDevice
+                    ? "Install MetaMask App →"
+                    : "Install MetaMask Extension →"}
                 </a>
               )}
 
