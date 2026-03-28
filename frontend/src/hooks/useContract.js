@@ -2,6 +2,30 @@ import { useState, useCallback, useEffect } from "react";
 import { ethers, BrowserProvider } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/contractConfig";
 
+const MOBILE_UA_REGEX = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i;
+const LOCALHOST_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+function isLocalhostHost(hostname) {
+  return LOCALHOST_HOSTS.has((hostname || "").toLowerCase());
+}
+
+function buildMetaMaskDeepLink(url) {
+  const normalizedUrl = (url || "").replace(/^https?:\/\//i, "");
+  return `https://metamask.app.link/dapp/${normalizedUrl}`;
+}
+
+function getPreferredInjectedProvider() {
+  const ethereum = window.ethereum;
+  if (!ethereum) return null;
+
+  if (Array.isArray(ethereum.providers) && ethereum.providers.length > 0) {
+    const metaMaskProvider = ethereum.providers.find((p) => p?.isMetaMask);
+    return metaMaskProvider || ethereum.providers[0];
+  }
+
+  return ethereum;
+}
+
 /**
  * Hook to interact with the VoteChainVoting contract via MetaMask.
  */
@@ -17,20 +41,30 @@ export function useContract() {
     setLoading(true);
     setError("");
     try {
-      const isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(
+      const isMobile = MOBILE_UA_REGEX.test(
         navigator?.userAgent || ""
       );
+      const injectedProvider = getPreferredInjectedProvider();
 
-      if (!window.ethereum) {
+      if (!injectedProvider) {
+        if (isMobile) {
+          if (isLocalhostHost(window.location.hostname)) {
+            throw new Error(
+              "This URL uses localhost, which MetaMask mobile cannot open. Run the app with a LAN/IP URL and open that URL on your phone."
+            );
+          }
+
+          window.location.href = buildMetaMaskDeepLink(window.location.href || "");
+          return;
+        }
+
         throw new Error(
-          isMobile
-            ? "MetaMask was not detected in this browser. Open this site inside the MetaMask app browser to connect."
-            : "MetaMask is not installed. Please install the MetaMask browser extension to use this app."
+          "MetaMask is not installed. Please install the MetaMask browser extension to use this app."
         );
       }
 
       // Request account access
-      const accounts = await window.ethereum.request({
+      const accounts = await injectedProvider.request({
         method: "eth_requestAccounts",
       });
       if (accounts.length === 0) {
@@ -38,11 +72,11 @@ export function useContract() {
       }
 
       // Force network switch
-      const hexChainId = await window.ethereum.request({ method: "eth_chainId" });
+      const hexChainId = await injectedProvider.request({ method: "eth_chainId" });
       const HARDHAT_CHAIN_ID_HEX = "0xaa36a7"; // Sepolia
       if (hexChainId !== HARDHAT_CHAIN_ID_HEX) {
         try {
-          await window.ethereum.request({
+          await injectedProvider.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: HARDHAT_CHAIN_ID_HEX }],
           });
@@ -51,7 +85,7 @@ export function useContract() {
         }
       }
 
-      const web3Provider = new BrowserProvider(window.ethereum);
+      const web3Provider = new BrowserProvider(injectedProvider);
       const signer = await web3Provider.getSigner();
       const address = await signer.getAddress();
       const balance = await web3Provider.getBalance(address);
