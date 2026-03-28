@@ -22,7 +22,44 @@ const REQUIRED_CHAIN_NAME = HARDHAT_NETWORK.chainName;
 
 // localStorage key for remembering connection.
 const LS_KEY = "walletConnected";
-const MOBILE_UA_REGEX = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i;
+const MOBILE_UA_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+const LOCALHOST_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+function isLocalhostHost(hostname) {
+  return LOCALHOST_HOSTS.has((hostname || "").toLowerCase());
+}
+
+/**
+ * Generates a MetaMask deep link for the given URL.
+ * MetaMask documentation suggests prefixing with 'https://metamask.app.link/dapp/'
+ */
+function buildMetaMaskDeepLink(url) {
+  if (!url) return "https://metamask.app.link/";
+  // For most dapps, we want to remove the protocol but MetaMask sometimes 
+  // handles it better if we keep it or specifically use 'https://'
+  const cleanUrl = url.replace(/^https?:\/\//i, "");
+  return `https://metamask.app.link/dapp/${cleanUrl}`;
+}
+
+/**
+ * Explicitly redirect the user to the MetaMask app.
+ */
+export function redirectToMetaMask(currentUrl) {
+  const deepLink = buildMetaMaskDeepLink(currentUrl || window.location.href);
+  window.location.href = deepLink;
+}
+
+function getPreferredInjectedProvider() {
+  const ethereum = window.ethereum;
+  if (!ethereum) return null;
+
+  if (Array.isArray(ethereum.providers) && ethereum.providers.length > 0) {
+    const metaMaskProvider = ethereum.providers.find((p) => p?.isMetaMask);
+    return metaMaskProvider || ethereum.providers[0];
+  }
+
+  return ethereum;
+}
 
 // Helper: shorten address for display
 export function shortenAddress(address) {
@@ -46,30 +83,34 @@ export default function useWallet() {
   const [error, setError] = useState(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
+  const [mobileDeepLinkBlocked, setMobileDeepLinkBlocked] = useState(false);
 
   // Derived state
   const isConnected = !!account;
   const isWrongNetwork = isConnected && chainId !== REQUIRED_CHAIN_ID;
-  const canDeepLinkMetaMask = isMobileDevice && !isMetaMaskInstalled;
+  const canDeepLinkMetaMask =
+    isMobileDevice && !isMetaMaskInstalled && !mobileDeepLinkBlocked;
 
   // ─── Detect MetaMask (not just any provider) ────
   useEffect(() => {
     const ua = navigator?.userAgent || "";
     const mobile = MOBILE_UA_REGEX.test(ua);
     setIsMobileDevice(mobile);
+    setMobileDeepLinkBlocked(mobile && isLocalhostHost(window.location.hostname));
 
     // window.ethereum can be injected by MetaMask, Hardhat, or other wallets.
     // We specifically check for MetaMask's flag.
-    const ethereum = window.ethereum;
-    const hasMM = !!(ethereum && ethereum.isMetaMask);
+    const provider = getPreferredInjectedProvider();
+    const hasMM = !!provider;
     setIsMetaMaskInstalled(hasMM);
   }, []);
 
   // ─── Fetch network info ──────────────────────────
   const fetchNetwork = useCallback(async () => {
-    if (!window.ethereum) return;
+    const provider = getPreferredInjectedProvider();
+    if (!provider) return;
     try {
-      const hexChainId = await window.ethereum.request({
+      const hexChainId = await provider.request({
         method: "eth_chainId",
       });
       setChainId(hexChainId);
@@ -86,14 +127,19 @@ export default function useWallet() {
   // even if the site was previously approved. This makes the user
   // explicitly choose which account to connect each time.
   const connectWallet = useCallback(async () => {
-    const hasMMProvider = !!(window.ethereum && window.ethereum.isMetaMask);
+    const provider = getPreferredInjectedProvider();
+    const hasMMProvider = !!provider;
 
     if (!hasMMProvider) {
       if (isMobileDevice) {
-        const currentUrl = window.location.href || "";
-        const normalizedUrl = currentUrl.replace(/^https?:\/\//, "");
-        const deepLink = `https://metamask.app.link/dapp/${encodeURIComponent(normalizedUrl)}`;
-        window.location.href = deepLink;
+        if (isLocalhostHost(window.location.hostname)) {
+          setError(
+            "This URL uses localhost, which MetaMask mobile cannot open directly. Run the app with a LAN/IP URL and open that URL on your phone.",
+          );
+          return;
+        }
+
+        redirectToMetaMask(window.location.href);
         return;
       }
 
@@ -109,13 +155,13 @@ export default function useWallet() {
     try {
       // wallet_requestPermissions ALWAYS opens the MetaMask popup,
       // unlike eth_requestAccounts which silently returns if already approved.
-      await window.ethereum.request({
+      await provider.request({
         method: "wallet_requestPermissions",
         params: [{ eth_accounts: {} }],
       });
 
       // After the user approves, grab the selected accounts.
-      const accounts = await window.ethereum.request({
+      const accounts = await provider.request({
         method: "eth_accounts",
       });
 
@@ -151,14 +197,15 @@ export default function useWallet() {
 
   // ─── Sign-Message Authentication ─────────────────
   const authenticateWithSignature = useCallback(async () => {
-    if (!window.ethereum || !account) {
+    const provider = getPreferredInjectedProvider();
+    if (!provider || !account) {
       setError("Wallet not connected.");
       return null;
     }
 
     try {
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const ethersProvider = new BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
 
       const nonce = Math.floor(Math.random() * 1000000).toString();
       const message = `Sign this message to authenticate with VoteChain.\n\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}`;
@@ -180,9 +227,10 @@ export default function useWallet() {
 
   // ─── Switch Network ──────────────────────────────
   const switchNetwork = useCallback(async () => {
-    if (!window.ethereum) return;
+    const provider = getPreferredInjectedProvider();
+    if (!provider) return;
     try {
-      await window.ethereum.request({
+      await provider.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: REQUIRED_CHAIN_ID }],
       });
@@ -190,7 +238,7 @@ export default function useWallet() {
       if (err.code === 4902) {
         // Network not added to MetaMask, add it automatically
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: "wallet_addEthereumChain",
             params: [
               {
@@ -214,18 +262,19 @@ export default function useWallet() {
 
   // ─── Read Contract Example ───────────────────────
   const readContractExample = useCallback(async () => {
-    if (!window.ethereum) {
+    const provider = getPreferredInjectedProvider();
+    if (!provider) {
       setError("Wallet not connected.");
       return null;
     }
 
     try {
-      const provider = new BrowserProvider(window.ethereum);
+      const ethersProvider = new BrowserProvider(provider);
       // Sepolia USDC token address
       const tokenAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
       const abi = ["function name() view returns (string)"];
       const { Contract } = await import("ethers");
-      const contract = new Contract(tokenAddress, abi, provider);
+      const contract = new Contract(tokenAddress, abi, ethersProvider);
       const name = await contract.name();
       return name;
     } catch (err) {
@@ -242,10 +291,11 @@ export default function useWallet() {
   useEffect(() => {
     const autoReconnect = async () => {
       if (localStorage.getItem(LS_KEY) !== "true") return;
-      if (!window.ethereum || !window.ethereum.isMetaMask) return;
+      const provider = getPreferredInjectedProvider();
+      if (!provider) return;
 
       try {
-        const accounts = await window.ethereum.request({
+        const accounts = await provider.request({
           method: "eth_accounts",
         });
         if (accounts.length > 0) {
@@ -265,7 +315,8 @@ export default function useWallet() {
 
   // ─── MetaMask Event Listeners ─────────────────────
   useEffect(() => {
-    if (!window.ethereum) return;
+    const provider = getPreferredInjectedProvider();
+    if (!provider || !provider.on || !provider.removeListener) return;
 
     const handleAccountsChanged = (accounts) => {
       if (accounts.length === 0) {
@@ -280,12 +331,12 @@ export default function useWallet() {
       setNetwork(NETWORK_NAMES[_chainId] || `Chain ${parseInt(_chainId, 16)}`);
     };
 
-    window.ethereum.on("accountsChanged", handleAccountsChanged);
-    window.ethereum.on("chainChanged", handleChainChanged);
+    provider.on("accountsChanged", handleAccountsChanged);
+    provider.on("chainChanged", handleChainChanged);
 
     return () => {
-      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
-      window.ethereum.removeListener("chainChanged", handleChainChanged);
+      provider.removeListener("accountsChanged", handleAccountsChanged);
+      provider.removeListener("chainChanged", handleChainChanged);
     };
   }, [disconnectWallet]);
 
@@ -301,6 +352,7 @@ export default function useWallet() {
     isMobileDevice,
     isMetaMaskInstalled,
     canDeepLinkMetaMask,
+    mobileDeepLinkBlocked,
     isWrongNetwork,
     requiredChainName: REQUIRED_CHAIN_NAME,
 
@@ -310,5 +362,6 @@ export default function useWallet() {
     readContractExample,
     switchNetwork,
     clearError,
+    redirectToMetaMask: () => redirectToMetaMask(window.location.href),
   };
 }

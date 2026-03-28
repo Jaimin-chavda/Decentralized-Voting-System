@@ -28,6 +28,7 @@ export default function WalletConnect() {
     isMobileDevice,
     isMetaMaskInstalled,
     canDeepLinkMetaMask,
+    mobileDeepLinkBlocked,
     isWrongNetwork,
     requiredChainName,
     connectWallet,
@@ -36,6 +37,7 @@ export default function WalletConnect() {
     readContractExample,
     switchNetwork,
     clearError,
+    redirectToMetaMask,
   } = useWallet();
 
   const { addToast } = useToast();
@@ -142,6 +144,20 @@ export default function WalletConnect() {
             <p className="text-primary font-mono text-sm mb-6">
               {shortenAddress(account)}
             </p>
+
+            {isMobileDevice && !window.ethereum?.isMetaMask && (
+              <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 text-left">
+                <p className="text-xs text-text-muted mb-3 italic">
+                  Tip: You are connected, but not inside the MetaMask in-app browser. For the best experience on mobile, use the MetaMask app.
+                </p>
+                <button
+                  onClick={redirectToMetaMask}
+                  className="w-full py-2 text-xs font-bold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-all"
+                >
+                  🚀 Open in MetaMask App
+                </button>
+              </div>
+            )}
 
             {error && (
               <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm flex items-center justify-between">
@@ -279,7 +295,9 @@ export default function WalletConnect() {
               {isMetaMaskInstalled
                 ? "MetaMask detected! Click below to open the MetaMask popup and approve the connection."
                 : isMobileDevice
-                  ? "Mobile browser detected. Tap connect to open this site in the MetaMask app."
+                  ? mobileDeepLinkBlocked
+                    ? "Mobile browser detected, but this URL is localhost. Open the app using your computer's LAN IP instead."
+                    : "Mobile browser detected. Tap connect to open this site in the MetaMask app."
                   : "MetaMask extension was not found in your browser. Install it first."}
             </p>
           </div>
@@ -299,13 +317,17 @@ export default function WalletConnect() {
                   ? "MetaMask Detected"
                   : canDeepLinkMetaMask
                     ? "MetaMask Mobile Ready"
+                    : mobileDeepLinkBlocked
+                      ? "Mobile URL Not Reachable"
                     : "MetaMask Not Found"}
               </div>
-              <div className="text-xs opacity-80 mt-0.5">
+              <div className="text-xs opacity-90 mt-1 space-y-1">
                 {isMetaMaskInstalled
-                  ? "Your browser has the MetaMask extension. Click the button below to connect."
+                  ? "Your browser has a Web3 provider. Click the button below to connect."
                   : canDeepLinkMetaMask
-                    ? "You can open this dapp directly in MetaMask on your phone."
+                    ? "You can open this dapp directly in the MetaMask app on your phone."
+                    : mobileDeepLinkBlocked
+                      ? "Localhost URLs are not reachable inside MetaMask mobile. Use a LAN IP (e.g. 192.168.x.x) or a live URL."
                     : "Install MetaMask from metamask.io to continue."}
               </div>
             </div>
@@ -363,10 +385,25 @@ export default function WalletConnect() {
                 </p>
                 {canConnect && (
                   <div className="mt-3 inline-flex items-center gap-2 text-xs text-primary font-semibold">
-                    {canDeepLinkMetaMask ? "Tap to open app →" : "Click to connect →"}
+                    {canDeepLinkMetaMask ? "Tap to open MetaMask App →" : "Click to connect →"}
                   </div>
                 )}
               </button>
+
+              {/* Explicit Mobile Helper for Brave/etc users */}
+              {isMobileDevice && isMetaMaskInstalled && !window.ethereum?.isMetaMask && (
+                <div className="mb-6 p-4 rounded-2xl glass border-primary/20 text-center">
+                  <p className="text-xs text-text-muted mb-3">
+                    Detected a mobile browser with its own wallet (like Brave). If you prefer using the <strong>MetaMask App</strong>, tap below:
+                  </p>
+                  <button
+                    onClick={redirectToMetaMask}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/20 transition-all"
+                  >
+                    🦊 Open MetaMask App instead
+                  </button>
+                </div>
+              )}
 
               {/* WalletConnect placeholder */}
               <div className="w-full p-5 rounded-2xl border border-border/30 bg-white/[0.01] text-center mb-6 opacity-40 cursor-not-allowed">
