@@ -58,30 +58,65 @@ export const getProposalById = async (req, res) => {
 // @access  Private/Admin
 export const createProposal = async (req, res) => {
   try {
-    const { title, description, candidates, startDate, endDate, scopeType } = req.body;
+    const {
+      title,
+      description,
+      candidates,
+      startDate,
+      endDate,
+      scopeType,
+      status,
+    } = req.body;
+
+    if (!title?.trim()) {
+      return res.status(400).json({ message: "Proposal title is required" });
+    }
+
+    if (!description?.trim()) {
+      return res.status(400).json({ message: "Proposal description is required" });
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: "Start date and end date are required" });
+    }
+
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+
+    if (Number.isNaN(parsedStartDate.getTime()) || Number.isNaN(parsedEndDate.getTime())) {
+      return res.status(400).json({ message: "Invalid proposal dates" });
+    }
+
+    if (parsedEndDate <= parsedStartDate) {
+      return res.status(400).json({ message: "End date must be after start date" });
+    }
+
+    const candidateNames = Array.isArray(candidates) ? candidates : [];
 
     // Standardize candidates array
-    const formattedCandidates = candidates.map((name, index) => ({
+    const formattedCandidates = candidateNames
+      .filter((name) => typeof name === "string" && name.trim())
+      .map((name, index) => ({
       id: index,
-      name: name,
+      name: name.trim(),
       votes: 0
     }));
 
     const proposal = new Proposal({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       candidates: formattedCandidates,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       scopeType: scopeType || "GLOBAL",
-      status: "ACTIVE", // Or DRAFT if it requires manual activation
+      status: status || "DRAFT",
       createdBy: req.user._id
     });
 
     const savedProposal = await proposal.save();
     res.status(201).json(savedProposal);
   } catch (err) {
-    res.status(400).json({ message: "Failed to create proposal", error: err.message });
+    res.status(400).json({ message: err.message || "Failed to create proposal" });
   }
 };
 
